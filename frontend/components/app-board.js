@@ -1,5 +1,7 @@
 import './board-column.js';
 import './task-modal.js';
+import './login-form.js';
+import './register-form.js';
 import { api } from '../services/api.js';
 
 const STATUSES = [
@@ -73,9 +75,13 @@ export class AppBoard extends HTMLElement {
     this.shadowRoot.innerHTML = '<p style="padding:16px">Cargando…</p>';
   }
 
-  /** Mensaje cuando no hay sesión activa (los formularios de login llegan en la Tarea 13). */
+  /** Sin sesión activa: muestra login + registro, y al autenticarse con éxito carga el tablero. */
   renderLoginRequired() {
-    this.shadowRoot.innerHTML = '<p style="padding:16px">Inicia sesión para ver tu tablero.</p>';
+    this.shadowRoot.innerHTML = '<login-form></login-form><register-form></register-form>';
+    this.shadowRoot.addEventListener('auth-success', async () => {
+      await this.loadBoard();
+      this.render();
+    }, { once: true });
   }
 
   /** Pinta el botón de nueva tarea, las 5 columnas y el modal (oculto hasta que se abre). */
