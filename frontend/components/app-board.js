@@ -5,6 +5,13 @@ import './register-form.js';
 import { api } from '../services/api.js';
 import { buttonStyles } from '../styles/shared.js';
 
+/** Escapa texto de usuario antes de insertarlo en innerHTML, para evitar XSS. */
+function escapeHtml(value) {
+  const div = document.createElement('div');
+  div.textContent = value ?? '';
+  return div.innerHTML;
+}
+
 const STATUSES = [
   { key: 'backlog', label: 'Descripción y requisitos' },
   { key: 'planning', label: 'Planificación' },
@@ -208,19 +215,21 @@ export class AppBoard extends HTMLElement {
         ${buttonStyles}
         :host { display: block; }
         .topbar {
-          display: flex;
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
           align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
           gap: 12px;
           padding: 16px 24px;
           background: var(--color-surface);
           border-bottom: 1px solid var(--color-border);
           font-family: system-ui, sans-serif;
         }
-        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .topbar-left { justify-self: start; display: flex; align-items: center; gap: 16px; }
         .topbar h1 { font-size: 18px; margin: 0; color: var(--color-text); }
-        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .topbar-center { justify-self: center; text-align: center; }
+        .welcome { margin: 0; font-size: 13px; color: var(--color-text-secondary); white-space: nowrap; }
+        .welcome strong { color: var(--color-text); }
+        .topbar-right { justify-self: end; display: flex; align-items: center; gap: 12px; }
         .btn-icon {
           padding: 8px;
           width: 34px;
@@ -229,7 +238,10 @@ export class AppBoard extends HTMLElement {
           align-items: center;
           justify-content: center;
         }
-        .user-email { font-size: 13px; color: var(--color-text-secondary); }
+        @media (max-width: 768px) {
+          .topbar { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+          .topbar-left, .topbar-right { justify-self: center; }
+        }
 
         .board {
           display: flex;
@@ -249,9 +261,11 @@ export class AppBoard extends HTMLElement {
           <h1>Taskboard</h1>
           <button id="add" class="btn btn-primary">+ Nueva tarea</button>
         </div>
+        <div class="topbar-center">
+          <p class="welcome">Bienvenido, <strong>${escapeHtml(this.#user?.name)}</strong>, a tu panel de tareas</p>
+        </div>
         <div class="topbar-right">
           <button id="theme-toggle" class="btn btn-secondary btn-icon" aria-label="${themeAriaLabel}">${themeIcon}</button>
-          <span class="user-email">${this.#user?.email ?? ''}</span>
           <button id="logout" class="btn btn-secondary">Cerrar sesión</button>
         </div>
       </header>
