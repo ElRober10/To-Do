@@ -1,29 +1,29 @@
-# Taskboard Kanban Implementation Plan
+# Plan de implementación — Taskboard Kanban
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Para agentes:** SUB-SKILL REQUERIDA: usa superpowers:subagent-driven-development (recomendado) o superpowers:executing-plans para implementar este plan tarea a tarea. Los pasos usan checkboxes (`- [ ]`) para seguimiento.
 
-**Goal:** Build a working multi-board Kanban taskboard with PHP 8.4 REST API backend (MVC-style layers, PDO/MySQL, session auth) and a plain-JS Web Components frontend with drag&drop, animations, PHPUnit + Vitest tests, and Docker.
+**Objetivo:** Construir un tablero Kanban multi-tablero funcional, con backend PHP 8.4 en API REST (capas al estilo MVC, PDO/MySQL, auth por sesión) y frontend en JS puro con Web Components, drag&drop, animaciones, tests PHPUnit + Vitest, y Docker.
 
-**Architecture:** Front controller (`public/index.php`) → `Router` dispatches to `Controllers` → `Services` (business rules) → `Repositories` (PDO/SQL) → `Models` (plain value objects). Frontend: native Custom Elements consuming the REST API via `fetch`, HTML5 Drag and Drop API, CSS-only animations.
+**Arquitectura:** Front controller (`public/index.php`) → `Router` despacha a `Controllers` → `Services` (reglas de negocio) → `Repositories` (PDO/SQL) → `Models` (objetos de valor simples). Frontend: Custom Elements nativos que consumen la API REST vía `fetch`, HTML5 Drag and Drop API, animaciones solo con CSS.
 
-**Tech Stack:** PHP 8.4 (no framework), PDO/MySQL, PHPUnit 11, vanilla JS (ES modules, Web Components, Shadow DOM), Vitest + jsdom, Docker (nginx + php-fpm + mysql).
+**Stack tecnológico:** PHP 8.4 (sin framework), PDO/MySQL, PHPUnit 11, JS puro (módulos ES, Web Components, Shadow DOM), Vitest + jsdom, Docker (nginx + php-fpm + mysql).
 
 **Spec:** `docs/superpowers/specs/2026-09-17-taskboard-design.md`
 
-## Global Constraints
+## Restricciones globales
 
-- PHP version: 8.4 (project targets 8.4; composer.json floor is `>=8.1`, keep as-is for portability but develop/test against 8.4).
-- No PHP framework, no ORM — PDO with prepared statements only.
-- No JS framework/library — native Custom Elements, Shadow DOM, `fetch`, HTML5 Drag and Drop API only.
-- All `/api/*` responses are JSON with correct HTTP status codes.
-- Auth via PHP sessions + `httpOnly` cookie, `password_hash`/`password_verify`.
-- 5 fixed task statuses: `backlog`, `planning`, `in_progress`, `testing`, `done`.
-- Every DB access goes through a Repository — Controllers/Services never write raw SQL.
-- Mobile-first responsive CSS, breakpoints `480px`, `768px`, `1024px`.
+- Versión de PHP: 8.4 (el proyecto apunta a 8.4; el mínimo en composer.json es `>=8.1`, se deja así por portabilidad, pero se desarrolla/testea contra 8.4).
+- Sin framework PHP, sin ORM — solo PDO con prepared statements.
+- Sin framework/librería JS — solo Custom Elements nativos, Shadow DOM, `fetch` y HTML5 Drag and Drop API.
+- Todas las respuestas de `/api/*` son JSON con el código HTTP correcto.
+- Autenticación con sesiones PHP + cookie `httpOnly`, `password_hash`/`password_verify`.
+- 5 estados fijos de tarea: `backlog`, `planning`, `in_progress`, `testing`, `done`.
+- Todo acceso a BD pasa por un Repository — Controllers/Services nunca escriben SQL directo.
+- CSS responsive mobile-first, breakpoints `480px`, `768px`, `1024px`.
 
 ---
 
-## File Structure (target)
+## Estructura de archivos (objetivo)
 
 ```
 app/
@@ -79,20 +79,20 @@ vitest.config.js
 
 ---
 
-## Task 1: Project skeleton, config and DB connection
+## Tarea 1: Esqueleto del proyecto, configuración y conexión a BD
 
-**Files:**
-- Create: `app/Core/Database.php`
-- Create: `config/config.php`
-- Create: `.env.example`
-- Create: `.gitignore`
-- Create: `database/schema.sql`
-- Modify: `composer.json` (add `App\` already present; no change needed if already correct — verify)
+**Archivos:**
+- Crear: `app/Core/Database.php`
+- Crear: `config/config.php`
+- Crear: `.env.example`
+- Crear: `.gitignore`
+- Crear: `database/schema.sql`
+- Modificar: `composer.json` (add `App\` already present; no change needed if already correct — verify)
 
 **Interfaces:**
-- Produces: `App\Core\Database::connection(): PDO` — lazy singleton PDO connection read from env vars `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` (with sane local defaults).
+- Produce: `App\Core\Database::connection(): PDO` — conexión PDO singleton perezosa, leída de las variables de entorno `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` (con valores por defecto razonables en local).
 
-- [ ] **Step 1: Create `.gitignore`**
+- [ ] **Paso 1: Crea `.gitignore`**
 
 ```
 /vendor/
@@ -101,7 +101,7 @@ vitest.config.js
 *.log
 ```
 
-- [ ] **Step 2: Create `.env.example`**
+- [ ] **Paso 2: Crea `.env.example`**
 
 ```
 DB_HOST=127.0.0.1
@@ -110,7 +110,7 @@ DB_USER=root
 DB_PASS=
 ```
 
-- [ ] **Step 3: Create `database/schema.sql`**
+- [ ] **Paso 3: Crea `database/schema.sql`**
 
 ```sql
 CREATE DATABASE IF NOT EXISTS todo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -150,7 +150,7 @@ CREATE TABLE tasks (
 ) ENGINE=InnoDB;
 ```
 
-- [ ] **Step 4: Create `config/config.php`**
+- [ ] **Paso 4: Crea `config/config.php`**
 
 ```php
 <?php
@@ -167,7 +167,7 @@ return [
 ];
 ```
 
-- [ ] **Step 5: Create `app/Core/Database.php`**
+- [ ] **Paso 5: Crea `app/Core/Database.php`**
 
 ```php
 <?php
@@ -206,12 +206,12 @@ final class Database
 }
 ```
 
-- [ ] **Step 6: Verify composer autoload and install dependencies**
+- [ ] **Paso 6: Verifica el autoload de composer e instala dependencias**
 
-Run: `composer install`
-Expected: creates `vendor/`, no errors.
+Ejecuta: `composer install`
+Esperado: crea `vendor/`, sin errores.
 
-- [ ] **Step 7: Commit**
+- [ ] **Paso 7: Commit**
 
 ```bash
 git add .gitignore .env.example database/schema.sql config/config.php app/Core/Database.php composer.lock
@@ -220,27 +220,27 @@ git commit -m "feat: add DB schema, config and PDO connection wrapper"
 
 ---
 
-## Task 2: Core HTTP primitives (Request, Response, Router, Session, ApiException)
+## Tarea 2: Primitivas HTTP del núcleo (Request, Response, Router, Session, ApiException)
 
-**Files:**
-- Create: `app/Core/Request.php`
-- Create: `app/Core/Response.php`
-- Create: `app/Core/Router.php`
-- Create: `app/Core/Session.php`
-- Create: `app/Core/ApiException.php`
+**Archivos:**
+- Crear: `app/Core/Request.php`
+- Crear: `app/Core/Response.php`
+- Crear: `app/Core/Router.php`
+- Crear: `app/Core/Session.php`
+- Crear: `app/Core/ApiException.php`
 - Test: `tests/Unit/Core/RouterTest.php`
 - Test: `tests/bootstrap.php`
-- Modify: `composer.json` (add `autoload-dev` psr-4 `Tests\\` → `tests/`, and phpunit config)
-- Create: `phpunit.xml`
+- Modificar: `composer.json` (add `autoload-dev` psr-4 `Tests\\` → `tests/`, and phpunit config)
+- Crear: `phpunit.xml`
 
 **Interfaces:**
-- Produces: `App\Core\Request` — `method(): string`, `path(): string`, `input(string $key, $default = null): mixed`, `all(): array`, `params(): array`, `setParams(array $params): void`, static `fromGlobals(): self`.
-- Produces: `App\Core\Response::json(array $data, int $status = 200): never` — sets header + status, echoes JSON, exits.
-- Produces: `App\Core\Router::add(string $method, string $pattern, callable $handler): void`, `dispatch(Request $request): void`.
-- Produces: `App\Core\Session::start(): void`, `set`, `get`, `has`, `remove`, `destroy`, `regenerate`.
-- Produces: `App\Core\ApiException` extends `\RuntimeException`, constructor `(string $message, int $status = 400)`, getter `getStatus(): int`.
+- Produce: `App\Core\Request` — `method(): string`, `path(): string`, `input(string $key, $default = null): mixed`, `all(): array`, `params(): array`, `setParams(array $params): void`, estático `fromGlobals(): self`.
+- Produce: `App\Core\Response::json(array $data, int $status = 200): never` — fija cabecera + status, imprime JSON, termina la ejecución.
+- Produce: `App\Core\Router::add(string $method, string $pattern, callable $handler): void`, `dispatch(Request $request): void`.
+- Produce: `App\Core\Session::start(): void`, `set`, `get`, `has`, `remove`, `destroy`, `regenerate`.
+- Produce: `App\Core\ApiException` extiende `\RuntimeException`, constructor `(string $message, int $status = 400)`, getter `getStatus(): int`.
 
-- [ ] **Step 1: Create `phpunit.xml`**
+- [ ] **Paso 1: Crea `phpunit.xml`**
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -256,7 +256,7 @@ git commit -m "feat: add DB schema, config and PDO connection wrapper"
 </phpunit>
 ```
 
-- [ ] **Step 2: Create `tests/bootstrap.php`**
+- [ ] **Paso 2: Crea `tests/bootstrap.php`**
 
 ```php
 <?php
@@ -266,7 +266,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/vendor/autoload.php';
 ```
 
-- [ ] **Step 3: Create `app/Core/ApiException.php`**
+- [ ] **Paso 3: Crea `app/Core/ApiException.php`**
 
 ```php
 <?php
@@ -289,7 +289,7 @@ class ApiException extends \RuntimeException
 }
 ```
 
-- [ ] **Step 4: Create `app/Core/Request.php`**
+- [ ] **Paso 4: Crea `app/Core/Request.php`**
 
 ```php
 <?php
@@ -358,7 +358,7 @@ final class Request
 }
 ```
 
-- [ ] **Step 5: Create `app/Core/Response.php`**
+- [ ] **Paso 5: Crea `app/Core/Response.php`**
 
 ```php
 <?php
@@ -379,7 +379,7 @@ final class Response
 }
 ```
 
-- [ ] **Step 6: Create `app/Core/Router.php`**
+- [ ] **Paso 6: Crea `app/Core/Router.php`**
 
 ```php
 <?php
@@ -431,7 +431,7 @@ final class Router
 }
 ```
 
-- [ ] **Step 7: Create `app/Core/Session.php`**
+- [ ] **Paso 7: Crea `app/Core/Session.php`**
 
 ```php
 <?php
@@ -486,7 +486,7 @@ final class Session
 }
 ```
 
-- [ ] **Step 8: Write the failing test for Router**
+- [ ] **Paso 8: Escribe el test que falla para Router**
 
 ```php
 <?php
@@ -531,17 +531,17 @@ final class RouterTest extends TestCase
 }
 ```
 
-- [ ] **Step 9: Run test to verify it fails**
+- [ ] **Paso 9: Ejecuta el test para comprobar que falla**
 
-Run: `vendor/bin/phpunit tests/Unit/Core/RouterTest.php`
-Expected: FAIL (class `App\Core\Router` or reflection setup errors) — since Router/Request already created above, first actually run to confirm it PASSES now (files were created in steps 4-7 already). If it fails for a reason other than "class not found", fix Router logic before continuing.
+Ejecuta: `vendor/bin/phpunit tests/Unit/Core/RouterTest.php`
+Esperado: FAIL (clase `App\Core\Router` o errores de reflection) — como Router/Request ya se crearon arriba, ejecútalo primero para confirmar que PASA ahora (los archivos se crearon en los pasos 4-7). Si falla por un motivo distinto a "class not found", arregla la lógica del Router antes de continuar.
 
-- [ ] **Step 10: Run test to verify it passes**
+- [ ] **Paso 10: Ejecuta el test para comprobar que pasa**
 
-Run: `vendor/bin/phpunit tests/Unit/Core/RouterTest.php`
-Expected: PASS (1 test, 1 assertion)
+Ejecuta: `vendor/bin/phpunit tests/Unit/Core/RouterTest.php`
+Esperado: PASS (1 test, 1 assertion)
 
-- [ ] **Step 11: Commit**
+- [ ] **Paso 11: Commit**
 
 ```bash
 git add app/Core/Request.php app/Core/Response.php app/Core/Router.php app/Core/Session.php app/Core/ApiException.php tests/Unit/Core/RouterTest.php tests/bootstrap.php phpunit.xml
@@ -550,21 +550,21 @@ git commit -m "feat: add core HTTP primitives (Request, Response, Router, Sessio
 
 ---
 
-## Task 3: User model, repository and AuthService (register/login)
+## Tarea 3: Modelo User, repositorio y AuthService (registro/login)
 
-**Files:**
-- Create: `app/Models/User.php`
-- Create: `app/Repositories/UserRepository.php`
-- Create: `app/Services/AuthService.php`
+**Archivos:**
+- Crear: `app/Models/User.php`
+- Crear: `app/Repositories/UserRepository.php`
+- Crear: `app/Services/AuthService.php`
 - Test: `tests/Unit/Services/AuthServiceTest.php`
 
 **Interfaces:**
-- Consumes: `App\Core\Database::connection(): PDO`, `App\Core\Session`, `App\Core\ApiException`.
-- Produces: `App\Models\User::fromRow(array $row): self` with public readonly `id, name, email`; `toArray(): array`.
-- Produces: `App\Repositories\UserRepository::findByEmail(string $email): ?array`, `findById(int $id): ?array`, `create(string $name, string $email, string $passwordHash): int`.
-- Produces: `App\Services\AuthService::register(string $name, string $email, string $password): array` (returns user array, throws `ApiException` 422 if email taken), `login(string $email, string $password): array` (throws `ApiException` 401 on bad credentials), `logout(): void`, `currentUser(): ?array`.
+- Consume: `App\Core\Database::connection(): PDO`, `App\Core\Session`, `App\Core\ApiException`.
+- Produce: `App\Models\User::fromRow(array $row): self` con propiedades públicas readonly `id, name, email`; `toArray(): array`.
+- Produce: `App\Repositories\UserRepository::findByEmail(string $email): ?array`, `findById(int $id): ?array`, `create(string $name, string $email, string $passwordHash): int`.
+- Produce: `App\Services\AuthService::register(string $name, string $email, string $password): array` (devuelve array de usuario, lanza `ApiException` 422 si el email ya existe), `login(string $email, string $password): array` (lanza `ApiException` 401 si las credenciales son inválidas), `logout(): void`, `currentUser(): ?array`.
 
-- [ ] **Step 1: Create `app/Models/User.php`**
+- [ ] **Paso 1: Crea `app/Models/User.php`**
 
 ```php
 <?php
@@ -594,7 +594,7 @@ final class User
 }
 ```
 
-- [ ] **Step 2: Create `app/Repositories/UserRepository.php`**
+- [ ] **Paso 2: Crea `app/Repositories/UserRepository.php`**
 
 ```php
 <?php
@@ -635,7 +635,7 @@ final class UserRepository
 }
 ```
 
-- [ ] **Step 3: Create `app/Services/AuthService.php`**
+- [ ] **Paso 3: Crea `app/Services/AuthService.php`**
 
 ```php
 <?php
@@ -713,7 +713,7 @@ final class AuthService
 }
 ```
 
-- [ ] **Step 4: Write failing tests for AuthService using a fake repository**
+- [ ] **Paso 4: Escribe los tests que fallan para AuthService usando un repositorio falso**
 
 ```php
 <?php
@@ -791,17 +791,17 @@ final class AuthServiceTest extends TestCase
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they fail**
+- [ ] **Paso 5: Ejecuta los tests para comprobar que fallan**
 
-Run: `vendor/bin/phpunit tests/Unit/Services/AuthServiceTest.php`
-Expected: FAIL if `AuthService`/`UserRepository` not yet present — since created in steps 2-3, run now and confirm all 4 pass; if any fails, fix implementation until green.
+Ejecuta: `vendor/bin/phpunit tests/Unit/Services/AuthServiceTest.php`
+Esperado: FAIL si `AuthService`/`UserRepository` no existen aún — como se crearon en los pasos 2-3, ejecútalo ahora y confirma que los 4 pasan; si alguno falla, corrige la implementación hasta que esté en verde.
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [ ] **Paso 6: Ejecuta los tests para comprobar que pasan**
 
-Run: `vendor/bin/phpunit tests/Unit/Services/AuthServiceTest.php`
-Expected: PASS (4 tests)
+Ejecuta: `vendor/bin/phpunit tests/Unit/Services/AuthServiceTest.php`
+Esperado: PASS (4 tests)
 
-- [ ] **Step 7: Commit**
+- [ ] **Paso 7: Commit**
 
 ```bash
 git add app/Models/User.php app/Repositories/UserRepository.php app/Services/AuthService.php tests/Unit/Services/AuthServiceTest.php
@@ -810,19 +810,19 @@ git commit -m "feat: add User model, UserRepository and AuthService with tests"
 
 ---
 
-## Task 4: AuthMiddleware and AuthController, wire into front controller
+## Tarea 4: AuthMiddleware y AuthController, conectados al front controller
 
-**Files:**
-- Create: `app/Middleware/AuthMiddleware.php`
-- Create: `app/Controllers/Api/AuthController.php`
-- Create: `public/index.php`
+**Archivos:**
+- Crear: `app/Middleware/AuthMiddleware.php`
+- Crear: `app/Controllers/Api/AuthController.php`
+- Crear: `public/index.php`
 
 **Interfaces:**
-- Consumes: `App\Services\AuthService`, `App\Core\Session`, `App\Core\Response`, `App\Core\ApiException`.
-- Produces: `App\Middleware\AuthMiddleware::requireUserId(): int` — reads `Session::get('user_id')`, throws `ApiException('No autenticado', 401)` if absent.
-- Produces: `App\Controllers\Api\AuthController::register(Request $r)`, `login(Request $r)`, `logout(Request $r)`, `me(Request $r)` — each writes via `Response::json`.
+- Consume: `App\Services\AuthService`, `App\Core\Session`, `App\Core\Response`, `App\Core\ApiException`.
+- Produce: `App\Middleware\AuthMiddleware::requireUserId(): int` — lee `Session::get('user_id')`, lanza `ApiException('No autenticado', 401)` si no existe.
+- Produce: `App\Controllers\Api\AuthController::register(Request $r)`, `login(Request $r)`, `logout(Request $r)`, `me(Request $r)` — cada uno responde vía `Response::json`.
 
-- [ ] **Step 1: Create `app/Middleware/AuthMiddleware.php`**
+- [ ] **Paso 1: Crea `app/Middleware/AuthMiddleware.php`**
 
 ```php
 <?php
@@ -850,7 +850,7 @@ final class AuthMiddleware
 }
 ```
 
-- [ ] **Step 2: Create `app/Controllers/Api/AuthController.php`**
+- [ ] **Paso 2: Crea `app/Controllers/Api/AuthController.php`**
 
 ```php
 <?php
@@ -913,7 +913,7 @@ final class AuthController
 }
 ```
 
-- [ ] **Step 3: Create `public/index.php`**
+- [ ] **Paso 3: Crea `public/index.php`**
 
 ```php
 <?php
@@ -950,14 +950,14 @@ try {
 }
 ```
 
-- [ ] **Step 4: Manual smoke test with PHP built-in server**
+- [ ] **Paso 4: Prueba manual con el servidor integrado de PHP**
 
-Run: `php -S 127.0.0.1:8080 -t public`
-Then in another terminal:
+Ejecuta: `php -S 127.0.0.1:8080 -t public`
+Luego en otra terminal:
 `curl -s -X POST http://127.0.0.1:8080/api/auth/register -H "Content-Type: application/json" -d "{\"name\":\"Rober\",\"email\":\"rober@test.com\",\"password\":\"secret123\"}"`
-Expected: JSON `{"user":{"id":1,"name":"Rober","email":"rober@test.com"}}` with HTTP 201 (requires `todo` DB with schema imported and `.env`/env vars set — otherwise expect a DB connection error, which is acceptable at this step and resolved once DB is set up locally or via Docker in Task 9).
+Esperado: JSON `{"user":{"id":1,"name":"Rober","email":"rober@test.com"}}` con HTTP 201 (requiere la BD `todo` con el schema importado y `.env`/variables de entorno configuradas — si no, se espera un error de conexión a BD, aceptable en este paso y resuelto cuando la BD esté disponible en local o vía Docker en la Tarea 9).
 
-- [ ] **Step 5: Commit**
+- [ ] **Paso 5: Commit**
 
 ```bash
 git add app/Middleware/AuthMiddleware.php app/Controllers/Api/AuthController.php public/index.php
@@ -966,23 +966,23 @@ git commit -m "feat: add AuthMiddleware, AuthController and front controller wir
 
 ---
 
-## Task 5: Board model, repository, service and controller
+## Tarea 5: Modelo Board, repositorio, servicio y controlador
 
-**Files:**
-- Create: `app/Models/Board.php`
-- Create: `app/Repositories/BoardRepository.php`
-- Create: `app/Services/BoardService.php`
-- Create: `app/Controllers/Api/BoardController.php`
-- Modify: `public/index.php` (register board routes)
+**Archivos:**
+- Crear: `app/Models/Board.php`
+- Crear: `app/Repositories/BoardRepository.php`
+- Crear: `app/Services/BoardService.php`
+- Crear: `app/Controllers/Api/BoardController.php`
+- Modificar: `public/index.php` (register board routes)
 - Test: `tests/Unit/Services/BoardServiceTest.php`
 
 **Interfaces:**
-- Consumes: `App\Middleware\AuthMiddleware::requireUserId(): int`.
-- Produces: `App\Models\Board::fromRow(array $row): self` with `id, userId, name`; `toArray(): array`.
-- Produces: `App\Repositories\BoardRepository::allForUser(int $userId): array`, `find(int $id): ?array`, `create(int $userId, string $name): int`.
-- Produces: `App\Services\BoardService::listForUser(int $userId): array`, `create(int $userId, string $name): array`, `getOwned(int $boardId, int $userId): array` (throws `ApiException` 404 if not found/not owned).
+- Consume: `App\Middleware\AuthMiddleware::requireUserId(): int`.
+- Produce: `App\Models\Board::fromRow(array $row): self` con `id, userId, name`; `toArray(): array`.
+- Produce: `App\Repositories\BoardRepository::allForUser(int $userId): array`, `find(int $id): ?array`, `create(int $userId, string $name): int`.
+- Produce: `App\Services\BoardService::listForUser(int $userId): array`, `create(int $userId, string $name): array`, `getOwned(int $boardId, int $userId): array` (lanza `ApiException` 404 si no existe o no pertenece al usuario).
 
-- [ ] **Step 1: Create `app/Models/Board.php`**
+- [ ] **Paso 1: Crea `app/Models/Board.php`**
 
 ```php
 <?php
@@ -1012,7 +1012,7 @@ final class Board
 }
 ```
 
-- [ ] **Step 2: Create `app/Repositories/BoardRepository.php`**
+- [ ] **Paso 2: Crea `app/Repositories/BoardRepository.php`**
 
 ```php
 <?php
@@ -1049,7 +1049,7 @@ final class BoardRepository
 }
 ```
 
-- [ ] **Step 3: Create `app/Services/BoardService.php`**
+- [ ] **Paso 3: Crea `app/Services/BoardService.php`**
 
 ```php
 <?php
@@ -1099,7 +1099,7 @@ final class BoardService
 }
 ```
 
-- [ ] **Step 4: Create `app/Controllers/Api/BoardController.php`**
+- [ ] **Paso 4: Crea `app/Controllers/Api/BoardController.php`**
 
 ```php
 <?php
@@ -1147,9 +1147,9 @@ final class BoardController
 }
 ```
 
-- [ ] **Step 5: Register routes in `public/index.php`**
+- [ ] **Paso 5: Registra las rutas en `public/index.php`**
 
-Add after the auth routes:
+Añade después de las rutas de auth:
 
 ```php
 use App\Controllers\Api\BoardController;
@@ -1160,7 +1160,7 @@ $router->add('POST', '/api/boards', [$boards, 'store']);
 $router->add('GET', '/api/boards/{id}', [$boards, 'show']);
 ```
 
-- [ ] **Step 6: Write failing test for BoardService**
+- [ ] **Paso 6: Escribe el test que falla para BoardService**
 
 ```php
 <?php
@@ -1211,12 +1211,12 @@ final class BoardServiceTest extends TestCase
 }
 ```
 
-- [ ] **Step 7: Run tests to verify they fail then pass**
+- [ ] **Paso 7: Ejecuta los tests, comprueba que fallan y luego que pasan**
 
-Run: `vendor/bin/phpunit tests/Unit/Services/BoardServiceTest.php`
-Expected: PASS (3 tests) once Steps 1-3 files exist.
+Ejecuta: `vendor/bin/phpunit tests/Unit/Services/BoardServiceTest.php`
+Esperado: PASS (3 tests) una vez existan los archivos de los pasos 1-3.
 
-- [ ] **Step 8: Commit**
+- [ ] **Paso 8: Commit**
 
 ```bash
 git add app/Models/Board.php app/Repositories/BoardRepository.php app/Services/BoardService.php app/Controllers/Api/BoardController.php public/index.php tests/Unit/Services/BoardServiceTest.php
@@ -1225,23 +1225,23 @@ git commit -m "feat: add Board model, repository, service, controller and routes
 
 ---
 
-## Task 6: Task model, repository, service (with position logic) and controller
+## Tarea 6: Modelo Task, repositorio, servicio (con lógica de posición) y controlador
 
-**Files:**
-- Create: `app/Models/Task.php`
-- Create: `app/Repositories/TaskRepository.php`
-- Create: `app/Services/TaskService.php`
-- Create: `app/Controllers/Api/TaskController.php`
-- Modify: `public/index.php` (register task routes)
+**Archivos:**
+- Crear: `app/Models/Task.php`
+- Crear: `app/Repositories/TaskRepository.php`
+- Crear: `app/Services/TaskService.php`
+- Crear: `app/Controllers/Api/TaskController.php`
+- Modificar: `public/index.php` (register task routes)
 - Test: `tests/Unit/Services/TaskServiceTest.php`
 
 **Interfaces:**
-- Consumes: `App\Services\BoardService::getOwned(int, int): array` (ownership check before touching tasks), `App\Middleware\AuthMiddleware::requireUserId(): int`.
-- Produces: `App\Models\Task::fromRow(array $row): self` with `id, boardId, title, description, status, priority, color, dueDate, position`; `toArray(): array`.
-- Produces: `App\Repositories\TaskRepository::allForBoard(int $boardId): array`, `find(int $id): ?array`, `create(array $data): int`, `update(int $id, array $data): void`, `updateStatusAndPosition(int $id, string $status, int $position): void`, `delete(int $id): void`, `maxPositionForStatus(int $boardId, string $status): int`.
-- Produces: `App\Services\TaskService::listForBoard(int $boardId, int $userId): array`, `create(int $boardId, int $userId, array $data): array`, `update(int $taskId, int $userId, array $data): array`, `moveStatus(int $taskId, int $userId, string $status, int $position): array`, `delete(int $taskId, int $userId): void`.
+- Consume: `App\Services\BoardService::getOwned(int, int): array` (comprobación de propiedad antes de tocar tareas), `App\Middleware\AuthMiddleware::requireUserId(): int`.
+- Produce: `App\Models\Task::fromRow(array $row): self` con `id, boardId, title, description, status, priority, color, dueDate, position`; `toArray(): array`.
+- Produce: `App\Repositories\TaskRepository::allForBoard(int $boardId): array`, `find(int $id): ?array`, `create(array $data): int`, `update(int $id, array $data): void`, `updateStatusAndPosition(int $id, string $status, int $position): void`, `delete(int $id): void`, `maxPositionForStatus(int $boardId, string $status): int`.
+- Produce: `App\Services\TaskService::listForBoard(int $boardId, int $userId): array`, `create(int $boardId, int $userId, array $data): array`, `update(int $taskId, int $userId, array $data): array`, `moveStatus(int $taskId, int $userId, string $status, int $position): array`, `delete(int $taskId, int $userId): void`.
 
-- [ ] **Step 1: Create `app/Models/Task.php`**
+- [ ] **Paso 1: Crea `app/Models/Task.php`**
 
 ```php
 <?php
@@ -1297,7 +1297,7 @@ final class Task
 }
 ```
 
-- [ ] **Step 2: Create `app/Repositories/TaskRepository.php`**
+- [ ] **Paso 2: Crea `app/Repositories/TaskRepository.php`**
 
 ```php
 <?php
@@ -1387,7 +1387,7 @@ final class TaskRepository
 }
 ```
 
-- [ ] **Step 3: Create `app/Services/TaskService.php`**
+- [ ] **Paso 3: Crea `app/Services/TaskService.php`**
 
 ```php
 <?php
@@ -1512,7 +1512,7 @@ final class TaskService
 }
 ```
 
-- [ ] **Step 4: Create `app/Controllers/Api/TaskController.php`**
+- [ ] **Paso 4: Crea `app/Controllers/Api/TaskController.php`**
 
 ```php
 <?php
@@ -1586,7 +1586,7 @@ final class TaskController
 }
 ```
 
-- [ ] **Step 5: Register routes in `public/index.php`**
+- [ ] **Paso 5: Registra las rutas en `public/index.php`**
 
 ```php
 use App\Controllers\Api\TaskController;
@@ -1599,7 +1599,7 @@ $router->add('PATCH', '/api/tasks/{id}/status', [$tasks, 'updateStatus']);
 $router->add('DELETE', '/api/tasks/{id}', [$tasks, 'destroy']);
 ```
 
-- [ ] **Step 6: Write failing tests for TaskService**
+- [ ] **Paso 6: Escribe los tests que fallan para TaskService**
 
 ```php
 <?php
@@ -1673,12 +1673,12 @@ final class TaskServiceTest extends TestCase
 }
 ```
 
-- [ ] **Step 7: Run tests to verify they fail then pass**
+- [ ] **Paso 7: Ejecuta los tests, comprueba que fallan y luego que pasan**
 
-Run: `vendor/bin/phpunit tests/Unit/Services/TaskServiceTest.php`
-Expected: PASS (3 tests) once Steps 1-3 files exist.
+Ejecuta: `vendor/bin/phpunit tests/Unit/Services/TaskServiceTest.php`
+Esperado: PASS (3 tests) una vez existan los archivos de los pasos 1-3.
 
-- [ ] **Step 8: Commit**
+- [ ] **Paso 8: Commit**
 
 ```bash
 git add app/Models/Task.php app/Repositories/TaskRepository.php app/Services/TaskService.php app/Controllers/Api/TaskController.php public/index.php tests/Unit/Services/TaskServiceTest.php
@@ -1687,20 +1687,20 @@ git commit -m "feat: add Task model, repository, service with position logic, co
 
 ---
 
-## Task 7: Integration tests against real MySQL (test database)
+## Tarea 7: Tests de integración contra MySQL real (BD de test)
 
-**Files:**
-- Create: `tests/Integration/Repositories/UserRepositoryTest.php`
-- Create: `tests/Integration/Repositories/TaskRepositoryTest.php`
-- Create: `database/schema_test.sql` (same schema, DB name `todo_test`)
-- Create: `phpunit.xml` split? Reuse existing `phpunit.xml`; add `DB_NAME=todo_test` guidance via `.env.testing` note in README (documentation is user's own task per spec, so just leave a comment at top of test files explaining the required env var).
+**Archivos:**
+- Crear: `tests/Integration/Repositories/UserRepositoryTest.php`
+- Crear: `tests/Integration/Repositories/TaskRepositoryTest.php`
+- Crear: `database/schema_test.sql` (mismo schema, BD llamada `todo_test`)
+- Reutiliza el `phpunit.xml` existente; indica `DB_NAME=todo_test` como comentario al inicio de los archivos de test explicando la variable de entorno requerida (la documentación es tarea propia del usuario según la spec, así que no se crea un README aquí).
 
 **Interfaces:**
-- Consumes: `App\Core\Database::connection()`, `App\Repositories\UserRepository`, `App\Repositories\TaskRepository`, `App\Repositories\BoardRepository`.
+- Consume: `App\Core\Database::connection()`, `App\Repositories\UserRepository`, `App\Repositories\TaskRepository`, `App\Repositories\BoardRepository`.
 
-- [ ] **Step 1: Create `database/schema_test.sql`**
+- [ ] **Paso 1: Crea `database/schema_test.sql`**
 
-Copy of `database/schema.sql` with `todo` replaced by `todo_test` (database name only, table structure identical).
+Copia de `database/schema.sql` con `todo` sustituido por `todo_test` (solo cambia el nombre de la BD, la estructura de tablas es idéntica).
 
 ```sql
 CREATE DATABASE IF NOT EXISTS todo_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -1709,7 +1709,7 @@ USE todo_test;
 -- (resto idéntico a database/schema.sql, con las mismas 3 tablas: users, boards, tasks)
 ```
 
-- [ ] **Step 2: Write `tests/Integration/Repositories/UserRepositoryTest.php`**
+- [ ] **Paso 2: Escribe `tests/Integration/Repositories/UserRepositoryTest.php`**
 
 ```php
 <?php
@@ -1754,7 +1754,7 @@ final class UserRepositoryTest extends TestCase
 }
 ```
 
-- [ ] **Step 3: Write `tests/Integration/Repositories/TaskRepositoryTest.php`**
+- [ ] **Paso 3: Escribe `tests/Integration/Repositories/TaskRepositoryTest.php`**
 
 ```php
 <?php
@@ -1820,14 +1820,14 @@ final class TaskRepositoryTest extends TestCase
 }
 ```
 
-- [ ] **Step 4: Create test database and run integration suite**
+- [ ] **Paso 4: Crea la BD de test y ejecuta la suite de integración**
 
-Run (with MySQL running locally, e.g. via Laragon):
+Ejecuta (con MySQL corriendo en local, p.ej. vía Laragon):
 `mysql -u root < database/schema_test.sql`
 `DB_NAME=todo_test vendor/bin/phpunit tests/Integration`
-Expected: PASS (4 tests). If MySQL isn't reachable yet, these are skipped, not failed — acceptable until Task 9 (Docker) provides MySQL.
+Esperado: PASS (4 tests). Si MySQL no está accesible todavía, estos tests se saltan (skip), no fallan — aceptable hasta que la Tarea 15 (Docker) provea MySQL.
 
-- [ ] **Step 5: Commit**
+- [ ] **Paso 5: Commit**
 
 ```bash
 git add database/schema_test.sql tests/Integration
@@ -1836,19 +1836,19 @@ git commit -m "test: add integration tests for UserRepository and TaskRepository
 
 ---
 
-## Task 8: Frontend skeleton, api.js and base styles
+## Tarea 8: Esqueleto del frontend, api.js y estilos base
 
-**Files:**
-- Create: `frontend/index.html`
-- Create: `frontend/services/api.js`
-- Create: `frontend/styles/base.css`
-- Create: `package.json`
-- Create: `vitest.config.js`
+**Archivos:**
+- Crear: `frontend/index.html`
+- Crear: `frontend/services/api.js`
+- Crear: `frontend/styles/base.css`
+- Crear: `package.json`
+- Crear: `vitest.config.js`
 
 **Interfaces:**
-- Produces: `frontend/services/api.js` exports `api` object with `register(name, email, password)`, `login(email, password)`, `logout()`, `me()`, `listBoards()`, `createBoard(name)`, `listTasks(boardId)`, `createTask(data)`, `updateTask(id, data)`, `moveTask(id, status, position)`, `deleteTask(id)` — all `async`, all using `fetch` with `credentials: 'include'`, throwing an `Error` with the API's `error` message on non-2xx.
+- Produce: `frontend/services/api.js` exporta el objeto `api` con `register(name, email, password)`, `login(email, password)`, `logout()`, `me()`, `listBoards()`, `createBoard(name)`, `listTasks(boardId)`, `createTask(data)`, `updateTask(id, data)`, `moveTask(id, status, position)`, `deleteTask(id)` — todos `async`, usando `fetch` con `credentials: 'include'`, lanzando un `Error` con el mensaje `error` de la API si la respuesta no es 2xx.
 
-- [ ] **Step 1: Create `package.json`**
+- [ ] **Paso 1: Crea `package.json`**
 
 ```json
 {
@@ -1865,7 +1865,7 @@ git commit -m "test: add integration tests for UserRepository and TaskRepository
 }
 ```
 
-- [ ] **Step 2: Create `vitest.config.js`**
+- [ ] **Paso 2: Crea `vitest.config.js`**
 
 ```js
 import { defineConfig } from 'vitest/config';
@@ -1878,7 +1878,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 3: Create `frontend/services/api.js`**
+- [ ] **Paso 3: Crea `frontend/services/api.js`**
 
 ```js
 const BASE_URL = '/api';
@@ -1930,7 +1930,7 @@ export const api = {
 };
 ```
 
-- [ ] **Step 4: Create `frontend/styles/base.css`**
+- [ ] **Paso 4: Crea `frontend/styles/base.css`**
 
 ```css
 :root {
@@ -1966,7 +1966,7 @@ body {
 }
 ```
 
-- [ ] **Step 5: Create `frontend/index.html`**
+- [ ] **Paso 5: Crea `frontend/index.html`**
 
 ```html
 <!doctype html>
@@ -1985,12 +1985,12 @@ body {
 </html>
 ```
 
-- [ ] **Step 6: Install frontend dependencies**
+- [ ] **Paso 6: Instala las dependencias del frontend**
 
-Run: `npm install`
-Expected: creates `node_modules/`, `package-lock.json`, no errors.
+Ejecuta: `npm install`
+Esperado: crea `node_modules/`, `package-lock.json`, sin errores.
 
-- [ ] **Step 7: Commit**
+- [ ] **Paso 7: Commit**
 
 ```bash
 git add frontend/index.html frontend/services/api.js frontend/styles/base.css package.json vitest.config.js package-lock.json
@@ -1999,18 +1999,18 @@ git commit -m "feat: add frontend skeleton, api.js client and base styles"
 
 ---
 
-## Task 9: task-card Web Component with position/priority logic + Vitest tests
+## Tarea 9: Web Component task-card con lógica de posición/prioridad + tests Vitest
 
-**Files:**
-- Create: `frontend/components/task-card.js`
-- Create: `frontend/utils/priority.js`
+**Archivos:**
+- Crear: `frontend/components/task-card.js`
+- Crear: `frontend/utils/priority.js`
 - Test: `tests/frontend/task-card.test.js`
 
 **Interfaces:**
-- Produces: `frontend/utils/priority.js` exports `priorityLabel(priority: string): string` (`low→'Baja'`, `medium→'Media'`, `high→'Alta'`) and `priorityWeight(priority: string): number` (for sorting, `high=0, medium=1, low=2`).
-- Produces: custom element `<task-card>` with attribute/property `task` (object), renders title/description/priority/date/color, dispatches `CustomEvent('task-move', { detail: { taskId, status, position }, bubbles: true })` — actual dispatch wired in Task 10 (board-column) on `drop`; this task only renders + sets `draggable=true` + `dragstart` sets `event.dataTransfer.setData('text/plain', String(taskId))`.
+- Produce: `frontend/utils/priority.js` exports `priorityLabel(priority: string): string` (`low→'Baja'`, `medium→'Media'`, `high→'Alta'`) and `priorityWeight(priority: string): number` (for sorting, `high=0, medium=1, low=2`).
+- Produce: custom element `<task-card>` with attribute/property `task` (object), renders title/description/priority/date/color, dispatches `CustomEvent('task-move', { detail: { taskId, status, position }, bubbles: true })` — actual dispatch wired in Task 10 (board-column) on `drop`; this task only renders + sets `draggable=true` + `dragstart` sets `event.dataTransfer.setData('text/plain', String(taskId))`.
 
-- [ ] **Step 1: Write failing test for `priority.js`**
+- [ ] **Paso 1: Escribe el test que falla para `priority.js`**
 
 ```js
 import { describe, it, expect } from 'vitest';
@@ -2030,12 +2030,12 @@ describe('priority utils', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Paso 2: Ejecuta el test para comprobar que falla**
 
-Run: `npm test -- tests/frontend/task-card.test.js`
-Expected: FAIL (module `priority.js` not found)
+Ejecuta: `npm test -- tests/frontend/task-card.test.js`
+Esperado: FAIL (módulo `priority.js` no encontrado)
 
-- [ ] **Step 3: Create `frontend/utils/priority.js`**
+- [ ] **Paso 3: Crea `frontend/utils/priority.js`**
 
 ```js
 const LABELS = { low: 'Baja', medium: 'Media', high: 'Alta' };
@@ -2050,7 +2050,7 @@ export function priorityWeight(priority) {
 }
 ```
 
-- [ ] **Step 4: Create `frontend/components/task-card.js`**
+- [ ] **Paso 4: Crea `frontend/components/task-card.js`**
 
 ```js
 import { priorityLabel } from '../utils/priority.js';
@@ -2113,12 +2113,12 @@ export class TaskCard extends HTMLElement {
 customElements.define('task-card', TaskCard);
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [ ] **Paso 5: Ejecuta el test para comprobar que pasa**
 
-Run: `npm test -- tests/frontend/task-card.test.js`
-Expected: PASS (2 tests)
+Ejecuta: `npm test -- tests/frontend/task-card.test.js`
+Esperado: PASS (2 tests)
 
-- [ ] **Step 6: Commit**
+- [ ] **Paso 6: Commit**
 
 ```bash
 git add frontend/utils/priority.js frontend/components/task-card.js tests/frontend/task-card.test.js
@@ -2127,18 +2127,18 @@ git commit -m "feat: add task-card Web Component and priority utils with tests"
 
 ---
 
-## Task 10: board-column Web Component with drop zone and FLIP reorder logic
+## Tarea 10: Web Component board-column con zona de drop y lógica de reordenación FLIP
 
-**Files:**
-- Create: `frontend/components/board-column.js`
-- Create: `frontend/utils/reorder.js`
+**Archivos:**
+- Crear: `frontend/components/board-column.js`
+- Crear: `frontend/utils/reorder.js`
 - Test: `tests/frontend/reorder.test.js`
 
 **Interfaces:**
-- Produces: `frontend/utils/reorder.js` exports `computeDropPosition(existingPositions: number[], dropIndex: number): number` — returns the integer position value a moved task should take when dropped at `dropIndex` among `existingPositions` (sorted ascending); returns `0` when list is empty, `max(existingPositions) + 1` when dropped at end, otherwise `existingPositions[dropIndex]` (shifts happen server-side via re-numbering not required for v1 — simple integer append/insert is enough given `position` is only used for ordering, not uniqueness).
-- Produces: custom element `<board-column>` with property `status` (string) and `title` (string), property `tasks` (array) → renders `<task-card>` children; listens for `dragover` (preventDefault to allow drop) and `drop` (reads `dataTransfer`, dispatches `CustomEvent('task-drop', { detail: { taskId, status, position }, bubbles: true, composed: true })`).
+- Produce: `frontend/utils/reorder.js` exports `computeDropPosition(existingPositions: number[], dropIndex: number): number` — returns the integer position value a moved task should take when dropped at `dropIndex` among `existingPositions` (sorted ascending); returns `0` when list is empty, `max(existingPositions) + 1` when dropped at end, otherwise `existingPositions[dropIndex]` (shifts happen server-side via re-numbering not required for v1 — simple integer append/insert is enough given `position` is only used for ordering, not uniqueness).
+- Produce: custom element `<board-column>` with property `status` (string) and `title` (string), property `tasks` (array) → renders `<task-card>` children; listens for `dragover` (preventDefault to allow drop) and `drop` (reads `dataTransfer`, dispatches `CustomEvent('task-drop', { detail: { taskId, status, position }, bubbles: true, composed: true })`).
 
-- [ ] **Step 1: Write failing test for `reorder.js`**
+- [ ] **Paso 1: Escribe el test que falla para `reorder.js`**
 
 ```js
 import { describe, it, expect } from 'vitest';
@@ -2159,12 +2159,12 @@ describe('computeDropPosition', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Paso 2: Ejecuta el test para comprobar que falla**
 
-Run: `npm test -- tests/frontend/reorder.test.js`
-Expected: FAIL (module not found)
+Ejecuta: `npm test -- tests/frontend/reorder.test.js`
+Esperado: FAIL (módulo no encontrado)
 
-- [ ] **Step 3: Create `frontend/utils/reorder.js`**
+- [ ] **Paso 3: Crea `frontend/utils/reorder.js`**
 
 ```js
 export function computeDropPosition(existingPositions, dropIndex) {
@@ -2180,7 +2180,7 @@ export function computeDropPosition(existingPositions, dropIndex) {
 }
 ```
 
-- [ ] **Step 4: Create `frontend/components/board-column.js`**
+- [ ] **Paso 4: Crea `frontend/components/board-column.js`**
 
 ```js
 import './task-card.js';
@@ -2263,12 +2263,12 @@ export class BoardColumn extends HTMLElement {
 customElements.define('board-column', BoardColumn);
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [ ] **Paso 5: Ejecuta el test para comprobar que pasa**
 
-Run: `npm test -- tests/frontend/reorder.test.js`
-Expected: PASS (3 tests)
+Ejecuta: `npm test -- tests/frontend/reorder.test.js`
+Esperado: PASS (3 tests)
 
-- [ ] **Step 6: Commit**
+- [ ] **Paso 6: Commit**
 
 ```bash
 git add frontend/utils/reorder.js frontend/components/board-column.js tests/frontend/reorder.test.js
@@ -2277,16 +2277,16 @@ git commit -m "feat: add board-column Web Component with drop zone and reorder u
 
 ---
 
-## Task 11: app-board Web Component (orchestrator) wiring drag&drop to the API
+## Tarea 11: Web Component app-board (orquestador) conectando el drag&drop a la API
 
-**Files:**
-- Create: `frontend/components/app-board.js`
+**Archivos:**
+- Crear: `frontend/components/app-board.js`
 
 **Interfaces:**
-- Consumes: `api.listBoards()`, `api.createBoard()`, `api.listTasks(boardId)`, `api.moveTask(id, status, position)`, `App\...` (n/a, frontend only), `<board-column>`, custom element `<task-modal>` (stubbed usage, built in Task 12).
-- Produces: custom element `<app-board>` — on connect: calls `api.me()`; if no user, renders `<login-form>`/`<register-form>` (Task 13); if user, loads first board (or creates "Mi tablero" if none exist) and renders 5 `<board-column>` grouped by status; listens for `task-drop` bubbling from columns and calls `api.moveTask` with optimistic UI update + rollback on failure.
+- Consume: `api.listBoards()`, `api.createBoard()`, `api.listTasks(boardId)`, `api.moveTask(id, status, position)`, `App\...` (n/a, frontend only), `<board-column>`, custom element `<task-modal>` (stubbed usage, built in Task 12).
+- Produce: custom element `<app-board>` — on connect: calls `api.me()`; if no user, renders `<login-form>`/`<register-form>` (Task 13); if user, loads first board (or creates "Mi tablero" if none exist) and renders 5 `<board-column>` grouped by status; listens for `task-drop` bubbling from columns and calls `api.moveTask` with optimistic UI update + rollback on failure.
 
-- [ ] **Step 1: Create `frontend/components/app-board.js`**
+- [ ] **Paso 1: Crea `frontend/components/app-board.js`**
 
 ```js
 import './board-column.js';
@@ -2372,12 +2372,12 @@ export class AppBoard extends HTMLElement {
 customElements.define('app-board', AppBoard);
 ```
 
-- [ ] **Step 2: Manual smoke test in browser**
+- [ ] **Paso 2: Prueba manual en el navegador**
 
-Run: `php -S 127.0.0.1:8080 -t public` (API) and serve `frontend/` statically, e.g. `npx serve frontend` or open `frontend/index.html` via a simple static server pointing `fetch` base at the API origin (for local dev without Docker, add a proxy or CORS — deferred to Task 14 Docker setup where nginx serves both under one origin).
-Expected: page loads without console errors once logged in (login UI arrives in Task 12); acceptable at this step to visually confirm "Inicia sesión..." message renders.
+Ejecuta: `php -S 127.0.0.1:8080 -t public` (API) y sirve `frontend/` de forma estática, p.ej. `npx serve frontend`, o abre `frontend/index.html` con un servidor estático simple que apunte el `fetch` al origen de la API (para desarrollo local sin Docker, añadir proxy o CORS — se deja para la Tarea 15 de Docker, donde nginx sirve ambos bajo el mismo origen).
+Esperado: la página carga sin errores en consola una vez logueado (la UI de login llega en la Tarea 13); en este paso es aceptable confirmar visualmente que se renderiza el mensaje "Inicia sesión...".
 
-- [ ] **Step 3: Commit**
+- [ ] **Paso 3: Commit**
 
 ```bash
 git add frontend/components/app-board.js
@@ -2386,16 +2386,16 @@ git commit -m "feat: add app-board orchestrator component with optimistic drag&d
 
 ---
 
-## Task 12: task-modal (create/edit form) and wiring into app-board
+## Tarea 12: task-modal (formulario crear/editar) y su conexión en app-board
 
-**Files:**
-- Create: `frontend/components/task-modal.js`
-- Modify: `frontend/components/app-board.js` (add "+ Nueva tarea" trigger, open modal, call `api.createTask`/`api.updateTask`, refresh list)
+**Archivos:**
+- Crear: `frontend/components/task-modal.js`
+- Modificar: `frontend/components/app-board.js` (add "+ Nueva tarea" trigger, open modal, call `api.createTask`/`api.updateTask`, refresh list)
 
 **Interfaces:**
-- Produces: custom element `<task-modal>` — property `task` (nullable, null = create mode), dispatches `CustomEvent('task-save', { detail: formData, bubbles: true, composed: true })` on submit and `CustomEvent('task-cancel', { bubbles: true, composed: true })` on cancel; method `open()`/`close()` toggling a `hidden` attribute-driven `<dialog>`-like overlay.
+- Produce: custom element `<task-modal>` — property `task` (nullable, null = create mode), dispatches `CustomEvent('task-save', { detail: formData, bubbles: true, composed: true })` on submit and `CustomEvent('task-cancel', { bubbles: true, composed: true })` on cancel; method `open()`/`close()` toggling a `hidden` attribute-driven `<dialog>`-like overlay.
 
-- [ ] **Step 1: Create `frontend/components/task-modal.js`**
+- [ ] **Paso 1: Crea `frontend/components/task-modal.js`**
 
 ```js
 export class TaskModal extends HTMLElement {
@@ -2473,11 +2473,11 @@ export class TaskModal extends HTMLElement {
 customElements.define('task-modal', TaskModal);
 ```
 
-- [ ] **Step 2: Wire modal into `frontend/components/app-board.js`**
+- [ ] **Paso 2: Conecta el modal en `frontend/components/app-board.js`**
 
-Add import at top: `import './task-modal.js';`
+Añade el import al principio: `import './task-modal.js';`
 
-Modify `render()` to append a trigger button and the modal, and add handlers in `connectedCallback`:
+Modifica `render()` para añadir un botón que lo dispare y el modal, y añade los manejadores en `connectedCallback`:
 
 ```js
   render() {
@@ -2501,7 +2501,7 @@ Modify `render()` to append a trigger button and the modal, and add handlers in 
   }
 ```
 
-Add to `connectedCallback`, after the `task-drop` listener:
+Añade en `connectedCallback`, después del listener de `task-drop`:
 
 ```js
     this.shadowRoot.addEventListener('task-save', async (event) => {
@@ -2516,12 +2516,12 @@ Add to `connectedCallback`, after the `task-drop` listener:
     });
 ```
 
-- [ ] **Step 3: Manual smoke test**
+- [ ] **Paso 3: Prueba manual**
 
-Run the full stack (Task 14 Docker or local PHP server + browser), log in, click "+ Nueva tarea", fill the form, submit.
-Expected: new task appears in the "Idea" column without a full page reload.
+Levanta el stack completo (Tarea 15 Docker o servidor PHP local + navegador), inicia sesión, haz clic en "+ Nueva tarea", rellena el formulario y envíalo.
+Esperado: la nueva tarea aparece en la columna "Idea" sin recargar la página.
 
-- [ ] **Step 4: Commit**
+- [ ] **Paso 4: Commit**
 
 ```bash
 git add frontend/components/task-modal.js frontend/components/app-board.js
@@ -2530,18 +2530,18 @@ git commit -m "feat: add task-modal component and wire task creation into app-bo
 
 ---
 
-## Task 13: login-form / register-form Web Components and auth flow
+## Tarea 13: Web Components login-form / register-form y flujo de autenticación
 
-**Files:**
-- Create: `frontend/components/login-form.js`
-- Create: `frontend/components/register-form.js`
-- Modify: `frontend/components/app-board.js` (replace `renderLoginRequired` with real forms, reload board after login/register)
+**Archivos:**
+- Crear: `frontend/components/login-form.js`
+- Crear: `frontend/components/register-form.js`
+- Modificar: `frontend/components/app-board.js` (replace `renderLoginRequired` with real forms, reload board after login/register)
 
 **Interfaces:**
-- Produces: `<login-form>` — dispatches `CustomEvent('auth-success', { detail: { user }, bubbles: true, composed: true })` on success, shows inline error message on failure.
-- Produces: `<register-form>` — same event contract as `login-form`.
+- Produce: `<login-form>` — dispatches `CustomEvent('auth-success', { detail: { user }, bubbles: true, composed: true })` on success, shows inline error message on failure.
+- Produce: `<register-form>` — same event contract as `login-form`.
 
-- [ ] **Step 1: Create `frontend/components/login-form.js`**
+- [ ] **Paso 1: Crea `frontend/components/login-form.js`**
 
 ```js
 import { api } from '../services/api.js';
@@ -2590,7 +2590,7 @@ export class LoginForm extends HTMLElement {
 customElements.define('login-form', LoginForm);
 ```
 
-- [ ] **Step 2: Create `frontend/components/register-form.js`**
+- [ ] **Paso 2: Crea `frontend/components/register-form.js`**
 
 ```js
 import { api } from '../services/api.js';
@@ -2640,11 +2640,11 @@ export class RegisterForm extends HTMLElement {
 customElements.define('register-form', RegisterForm);
 ```
 
-- [ ] **Step 3: Wire into `frontend/components/app-board.js`**
+- [ ] **Paso 3: Conéctalo en `frontend/components/app-board.js`**
 
-Add imports: `import './login-form.js'; import './register-form.js';`
+Añade los imports: `import './login-form.js'; import './register-form.js';`
 
-Replace `renderLoginRequired` with:
+Sustituye `renderLoginRequired` por:
 
 ```js
   renderLoginRequired() {
@@ -2656,12 +2656,12 @@ Replace `renderLoginRequired` with:
   }
 ```
 
-- [ ] **Step 4: Manual smoke test**
+- [ ] **Paso 4: Prueba manual**
 
-Serve frontend + API, open in browser with no session cookie.
-Expected: login/register forms appear; after registering, the board renders with an empty "Idea" column.
+Sirve el frontend + API, ábrelo en el navegador sin cookie de sesión.
+Esperado: aparecen los formularios de login/registro; tras registrarte, se renderiza el tablero con la columna "Idea" vacía.
 
-- [ ] **Step 5: Commit**
+- [ ] **Paso 5: Commit**
 
 ```bash
 git add frontend/components/login-form.js frontend/components/register-form.js frontend/components/app-board.js
@@ -2670,16 +2670,16 @@ git commit -m "feat: add login-form and register-form components with auth flow"
 
 ---
 
-## Task 14: Animations, responsive polish
+## Tarea 14: Animaciones y acabado responsive
 
-**Files:**
-- Create: `frontend/styles/animations.css`
-- Modify: `frontend/components/task-card.js` (add entry animation class on first render)
+**Archivos:**
+- Crear: `frontend/styles/animations.css`
+- Modificar: `frontend/components/task-card.js` (add entry animation class on first render)
 
 **Interfaces:**
-- No new interfaces; pure CSS + a small class toggle.
+- Sin interfaces nuevas; solo CSS y un pequeño toggle de clase.
 
-- [ ] **Step 1: Create `frontend/styles/animations.css`**
+- [ ] **Paso 1: Crea `frontend/styles/animations.css`**
 
 ```css
 @keyframes card-in {
@@ -2692,23 +2692,23 @@ git commit -m "feat: add login-form and register-form components with auth flow"
 }
 ```
 
-- [ ] **Step 2: Modify `frontend/components/task-card.js` render() to add the entry class**
+- [ ] **Paso 2: Modifica el `render()` de `frontend/components/task-card.js` para añadir la clase de entrada**
 
-In the `<style>` block inside the shadow DOM template, add:
+Dentro del bloque `<style>` del template del shadow DOM, añade:
 
 ```css
         .card { animation: card-in .2s ease-out; }
         @keyframes card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 ```
 
-(Kept duplicated inside the Shadow DOM `<style>` because styles in `frontend/styles/animations.css` do not pierce Shadow DOM boundaries — this is intentional encapsulation, not an oversight.)
+(Se duplica dentro del `<style>` del Shadow DOM porque los estilos de `frontend/styles/animations.css` no atraviesan el límite del Shadow DOM — es encapsulación intencionada, no un descuido.)
 
-- [ ] **Step 3: Manual visual check**
+- [ ] **Paso 3: Comprobación visual manual**
 
-Run the app in a browser, add a task, drag it between columns.
-Expected: new card fades/slides in; dragged card lifts (shadow+scale) during drag; column background highlights on `dragover`.
+Corre la app en el navegador, añade una tarea, arrástrala entre columnas.
+Esperado: la tarjeta nueva entra con fade/slide; la tarjeta arrastrada se eleva (sombra+escala) durante el arrastre; el fondo de la columna resalta en `dragover`.
 
-- [ ] **Step 4: Commit**
+- [ ] **Paso 4: Commit**
 
 ```bash
 git add frontend/styles/animations.css frontend/components/task-card.js
@@ -2717,17 +2717,17 @@ git commit -m "feat: add card entry animation and drag visual feedback"
 
 ---
 
-## Task 15: Docker (nginx + php-fpm + mysql)
+## Tarea 15: Docker (nginx + php-fpm + mysql)
 
-**Files:**
-- Create: `docker/Dockerfile`
-- Create: `docker/nginx.conf`
-- Create: `docker-compose.yml`
+**Archivos:**
+- Crear: `docker/Dockerfile`
+- Crear: `docker/nginx.conf`
+- Crear: `docker-compose.yml`
 
 **Interfaces:**
-- No PHP/JS interfaces; infra only. `docker-compose up` must serve the app on `http://localhost:8080` with `public/` as document root, `frontend/` reachable, and MySQL pre-loaded from `database/schema.sql`.
+- Sin interfaces PHP/JS; solo infraestructura. `docker-compose up` debe servir la app en `http://localhost:8080` con `public/` como document root, `frontend/` accesible, y MySQL precargado desde `database/schema.sql`.
 
-- [ ] **Step 1: Create `docker/Dockerfile`**
+- [ ] **Paso 1: Crea `docker/Dockerfile`**
 
 ```dockerfile
 FROM php:8.4-fpm
@@ -2737,7 +2737,7 @@ RUN docker-php-ext-install pdo_mysql
 WORKDIR /var/www/html
 ```
 
-- [ ] **Step 2: Create `docker/nginx.conf`**
+- [ ] **Paso 2: Crea `docker/nginx.conf`**
 
 ```nginx
 server {
@@ -2762,7 +2762,7 @@ server {
 }
 ```
 
-- [ ] **Step 3: Create `docker-compose.yml`**
+- [ ] **Paso 3: Crea `docker-compose.yml`**
 
 ```yaml
 services:
@@ -2803,18 +2803,18 @@ volumes:
   db_data:
 ```
 
-- [ ] **Step 4: Build and run**
+- [ ] **Paso 4: Compila y levanta**
 
-Run: `docker compose up --build -d`
-Then: `docker compose ps`
-Expected: 3 services `Up`/`running`.
+Ejecuta: `docker compose up --build -d`
+Luego: `docker compose ps`
+Esperado: 3 servicios en `Up`/`running`.
 
-- [ ] **Step 5: Smoke test through Docker**
+- [ ] **Paso 5: Prueba a través de Docker**
 
-Run: `curl -s -X POST http://localhost:8080/api/auth/register -H "Content-Type: application/json" -d "{\"name\":\"Rober\",\"email\":\"rober@test.com\",\"password\":\"secret123\"}"`
-Expected: HTTP 201 with the created user JSON. Then open `http://localhost:8080/frontend/index.html` in a browser and confirm the board loads (note: `frontend/services/api.js` uses relative `/api` paths, which resolve correctly since nginx serves both `public/` and `frontend/` under the same origin/port).
+Ejecuta: `curl -s -X POST http://localhost:8080/api/auth/register -H "Content-Type: application/json" -d "{\"name\":\"Rober\",\"email\":\"rober@test.com\",\"password\":\"secret123\"}"`
+Esperado: HTTP 201 con el JSON del usuario creado. Luego abre `http://localhost:8080/frontend/index.html` en el navegador y confirma que el tablero carga (nota: `frontend/services/api.js` usa rutas relativas `/api`, que resuelven bien porque nginx sirve `public/` y `frontend/` bajo el mismo origen/puerto).
 
-- [ ] **Step 6: Commit**
+- [ ] **Paso 6: Commit**
 
 ```bash
 git add docker/Dockerfile docker/nginx.conf docker-compose.yml
@@ -2823,8 +2823,8 @@ git commit -m "feat: add Docker setup (nginx + php-fpm + mysql)"
 
 ---
 
-## Self-Review Notes (completed during plan authoring)
+## Notas de autorrevisión (completadas al escribir el plan)
 
-1. **Spec coverage:** MVC layers (Task 1-6), routing/API (Task 2, 4-6), auth by session (Task 3-4), data model with `position` (Task 1, 6), Web Components + drag&drop + animations (Task 8-14), PHPUnit unit+integration (Task 3, 5-7), Vitest+jsdom (Task 8-10), Docker (Task 15), responsive (Task 8 base.css + Task 14 polish). Documentation is explicitly the user's own task per spec — not planned here.
-2. **Placeholder scan:** no TBD/TODO; all steps carry full code.
-3. **Type consistency:** `Task::toArray()` keys (`boardId`, `dueDate` camelCase) match what `frontend/services/api.js` sends/receives (`dueDate`, `boardId`) and what `TaskController`/`TaskService` read via `$request->input('boardId')` / `$data['dueDate']` — consistent end-to-end.
+1. **Cobertura de la spec:** capas MVC (Tareas 1-6), routing/API (Tareas 2, 4-6), auth por sesión (Tareas 3-4), modelo de datos con `position` (Tareas 1, 6), Web Components + drag&drop + animaciones (Tareas 8-14), PHPUnit unit+integration (Tareas 3, 5-7), Vitest+jsdom (Tareas 8-10), Docker (Tarea 15), responsive (Tarea 8 base.css + Tarea 14 acabado). La documentación es explícitamente tarea propia del usuario según la spec — no se planifica aquí.
+2. **Búsqueda de placeholders:** sin TBD/TODO; todos los pasos incluyen código completo.
+3. **Consistencia de tipos:** las claves de `Task::toArray()` (`boardId`, `dueDate` en camelCase) coinciden con lo que envía/recibe `frontend/services/api.js` (`dueDate`, `boardId`) y con lo que leen `TaskController`/`TaskService` vía `$request->input('boardId')` / `$data['dueDate']` — consistente de punta a punta.
