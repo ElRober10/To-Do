@@ -9,17 +9,11 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Router;
 use App\Core\Session;
-use App\Controllers\Api\AuthController;
 
 Session::start();
 
 $router = new Router();
-$auth = new AuthController();
-
-$router->add('POST', '/api/auth/register', [$auth, 'register']);
-$router->add('POST', '/api/auth/login', [$auth, 'login']);
-$router->add('POST', '/api/auth/logout', [$auth, 'logout']);
-$router->add('GET', '/api/auth/me', [$auth, 'me']);
+require_once dirname(__DIR__) . '/routes.php';
 
 $request = Request::fromGlobals();
 
