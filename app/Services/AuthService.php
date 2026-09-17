@@ -15,6 +15,7 @@ final class AuthService
     {
     }
 
+    /** Valida y crea un usuario nuevo, lo deja logueado y devuelve sus datos. */
     public function register(string $name, string $email, string $password): array
     {
         if (trim($name) === '' || trim($email) === '' || strlen($password) < 6) {
@@ -34,6 +35,7 @@ final class AuthService
         return $user->toArray();
     }
 
+    /** Comprueba credenciales, deja al usuario logueado y devuelve sus datos. */
     public function login(string $email, string $password): array
     {
         $row = $this->users->findByEmail($email);
@@ -48,11 +50,13 @@ final class AuthService
         return $user->toArray();
     }
 
+    /** Cierra la sesión del usuario actual. */
     public function logout(): void
     {
         Session::destroy();
     }
 
+    /** Devuelve los datos del usuario logueado, o null si no hay sesión activa. */
     public function currentUser(): ?array
     {
         $id = Session::get('user_id');
@@ -64,6 +68,7 @@ final class AuthService
         return $row === null ? null : User::fromRow($row)->toArray();
     }
 
+    /** Arranca sesión, regenera el ID (anti session fixation) y guarda el user_id logueado. */
     private function startSession(User $user): void
     {
         Session::start();

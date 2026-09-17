@@ -8,6 +8,7 @@ use App\Core\Database;
 
 class BoardRepository
 {
+    /** Lista los tableros de un usuario, más recientes primero. */
     public function allForUser(int $userId): array
     {
         $stmt = Database::connection()->prepare('SELECT * FROM boards WHERE user_id = :user_id ORDER BY created_at DESC');
@@ -15,6 +16,7 @@ class BoardRepository
         return $stmt->fetchAll();
     }
 
+    /** Busca un tablero por id, sin comprobar dueño (esa comprobación la hace el Service). */
     public function find(int $id): ?array
     {
         $stmt = Database::connection()->prepare('SELECT * FROM boards WHERE id = :id LIMIT 1');
@@ -23,6 +25,7 @@ class BoardRepository
         return $row === false ? null : $row;
     }
 
+    /** Inserta un tablero nuevo para ese usuario y devuelve su id autogenerado. */
     public function create(int $userId, string $name): int
     {
         $stmt = Database::connection()->prepare('INSERT INTO boards (user_id, name) VALUES (:user_id, :name)');

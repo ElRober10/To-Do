@@ -11,10 +11,11 @@ final class Database
 {
     private static ?PDO $connection = null;
 
+    /** Devuelve la conexión PDO activa, creándola la primera vez que se pide (singleton). */
     public static function connection(): PDO
     {
         if (self::$connection === null) {
-            $config = require dirname(__DIR__, 2) . '/config/config.php';
+            $config = require_once dirname(__DIR__, 2) . '/config/config.php';
             $db = $config['db'];
             $dsn = sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', $db['host'], $db['name']);
 

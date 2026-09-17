@@ -9,6 +9,7 @@ final class Router
     /** @var array<int, array{method: string, pattern: string, regex: string, handler: callable}> */
     private array $routes = [];
 
+    /** Registra una ruta: método HTTP + patrón (puede llevar {parametros}) + handler que la atiende. */
     public function add(string $method, string $pattern, callable $handler): void
     {
         $regex = preg_replace('#\{([a-zA-Z_]+)\}#', '(?P<$1>[^/]+)', $pattern);
@@ -20,6 +21,7 @@ final class Router
         ];
     }
 
+    /** Busca la primera ruta registrada que coincida con el método y la ruta del Request, y ejecuta su handler. */
     public function dispatch(Request $request): void
     {
         $method = $request->method();

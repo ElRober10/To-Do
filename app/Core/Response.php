@@ -6,6 +6,7 @@ namespace App\Core;
 
 final class Response
 {
+    /** Envía una respuesta JSON con el código HTTP indicado y termina la ejecución. */
     public static function json(array $data, int $status = 200): never
     {
         http_response_code($status);

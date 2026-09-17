@@ -21,12 +21,14 @@ final class BoardController
         $this->auth = new AuthMiddleware();
     }
 
+    /** GET /api/boards — lista los tableros del usuario logueado. */
     public function index(Request $request): void
     {
         $userId = $this->auth->requireUserId();
         Response::json(['boards' => $this->boards->listForUser($userId)]);
     }
 
+    /** POST /api/boards — crea un tablero nuevo para el usuario logueado. */
     public function store(Request $request): void
     {
         $userId = $this->auth->requireUserId();
@@ -34,6 +36,7 @@ final class BoardController
         Response::json(['board' => $board], 201);
     }
 
+    /** GET /api/boards/{id} — devuelve un tablero concreto si pertenece al usuario logueado. */
     public function show(Request $request): void
     {
         $userId = $this->auth->requireUserId();

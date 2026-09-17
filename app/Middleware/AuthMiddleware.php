@@ -9,6 +9,7 @@ use App\Core\Session;
 
 final class AuthMiddleware
 {
+    /** Comprueba que haya sesión activa y devuelve el user_id; si no, lanza 401. */
     public function requireUserId(): int
     {
         Session::start();

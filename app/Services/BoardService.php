@@ -14,6 +14,7 @@ final class BoardService
     {
     }
 
+    /** Lista los tableros del usuario ya convertidos a array listo para JSON. */
     public function listForUser(int $userId): array
     {
         return array_map(
@@ -22,6 +23,7 @@ final class BoardService
         );
     }
 
+    /** Valida el nombre y crea un tablero nuevo para el usuario. */
     public function create(int $userId, string $name): array
     {
         if (trim($name) === '') {
@@ -32,6 +34,7 @@ final class BoardService
         return Board::fromRow(['id' => $id, 'user_id' => $userId, 'name' => $name])->toArray();
     }
 
+    /** Busca el tablero y comprueba que pertenece a ese usuario; si no (o no existe), 404 (sin filtrar cuál de las dos). */
     public function getOwned(int $boardId, int $userId): array
     {
         $row = $this->boards->find($boardId);
