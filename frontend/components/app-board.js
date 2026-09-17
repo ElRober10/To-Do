@@ -92,7 +92,7 @@ export class AppBoard extends HTMLElement {
     });
 
     const board = this.shadowRoot.querySelector('.board');
-    board.style.cssText = 'display:flex;gap:16px;padding:16px;overflow-x:auto;';
+    board.style.cssText = 'display:flex;gap:16px;padding:16px;overflow-x:auto;min-height:calc(100vh - 80px);align-items:stretch;';
 
     for (const status of STATUSES) {
       const column = document.createElement('board-column');

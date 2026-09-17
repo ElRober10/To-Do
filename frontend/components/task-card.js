@@ -1,4 +1,5 @@
 import { priorityLabel } from '../utils/priority.js';
+import { closestAcrossShadow, elementFromPointDeep } from '../utils/dom.js';
 
 /** Escapa texto de usuario antes de insertarlo en innerHTML, para evitar XSS. */
 function escapeHtml(value) {
@@ -25,16 +26,62 @@ export class TaskCard extends HTMLElement {
     return this.#task;
   }
 
-  /** Se ejecuta cuando el navegador inserta el elemento en el DOM: prepara Shadow DOM y drag&drop. */
+  /** Se ejecuta cuando el navegador inserta el elemento en el DOM: prepara Shadow DOM y el arrastre manual. */
   connectedCallback() {
     this.attachShadow({ mode: 'open' });
-    this.setAttribute('draggable', 'true');
-    this.addEventListener('dragstart', (event) => {
-      event.dataTransfer.setData('text/plain', String(this.#task.id));
-      this.classList.add('dragging');
-    });
-    this.addEventListener('dragend', () => this.classList.remove('dragging'));
+    this.addEventListener('pointerdown', (event) => this.startDrag(event));
     this.render();
+  }
+
+  /** Arrastre manual: la propia tarjeta sigue al cursor con opacidad completa, sin depender del navegador. */
+  startDrag(event) {
+    if (event.button !== 0) return;
+
+    const rect = this.getBoundingClientRect();
+    const grabX = event.clientX - rect.left;
+    const grabY = event.clientY - rect.top;
+    let hoveredColumn = null;
+
+    this.setPointerCapture(event.pointerId);
+    this.classList.add('dragging');
+    Object.assign(this.style, {
+      position: 'fixed',
+      zIndex: '1000',
+      width: `${rect.width}px`,
+      left: `${rect.left}px`,
+      top: `${rect.top}px`,
+      pointerEvents: 'none',
+    });
+
+    const onMove = (moveEvent) => {
+      this.style.left = `${moveEvent.clientX - grabX}px`;
+      this.style.top = `${moveEvent.clientY - grabY}px`;
+
+      const under = elementFromPointDeep(moveEvent.clientX, moveEvent.clientY);
+      const column = closestAcrossShadow(under, 'board-column');
+
+      if (column !== hoveredColumn) {
+        hoveredColumn?.unhighlight();
+        column?.highlight();
+        hoveredColumn = column;
+      }
+    };
+
+    const onUp = (upEvent) => {
+      this.removeEventListener('pointermove', onMove);
+      this.removeEventListener('pointerup', onUp);
+      this.releasePointerCapture(upEvent.pointerId);
+
+      this.classList.remove('dragging');
+      Object.assign(this.style, {
+        position: '', zIndex: '', width: '', left: '', top: '', pointerEvents: '',
+      });
+
+      hoveredColumn?.acceptDrop(this.#task.id);
+    };
+
+    this.addEventListener('pointermove', onMove);
+    this.addEventListener('pointerup', onUp);
   }
 
   /** Pinta la tarjeta dentro de su Shadow DOM con los datos actuales. */

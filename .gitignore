@@ -3,3 +3,4 @@
 .env
 *.log
 .phpunit.result.cache
+.playwright-mcp/

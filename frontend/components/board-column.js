@@ -14,31 +14,34 @@ export class BoardColumn extends HTMLElement {
     return this.#tasks;
   }
 
-  /** Prepara Shadow DOM y escucha dragover/dragleave/drop para recibir tarjetas soltadas. */
+  /** Prepara el Shadow DOM. La detección del arrastre la controla task-card (drag manual, no HTML5 nativo). */
   connectedCallback() {
     this.attachShadow({ mode: 'open' });
-    this.addEventListener('dragover', (event) => {
-      event.preventDefault();
-      this.shadowRoot.querySelector('.column')?.classList.add('drag-over');
-    });
-    this.addEventListener('dragleave', () => {
-      this.shadowRoot.querySelector('.column')?.classList.remove('drag-over');
-    });
-    this.addEventListener('drop', (event) => {
-      event.preventDefault();
-      this.shadowRoot.querySelector('.column')?.classList.remove('drag-over');
-
-      const taskId = Number(event.dataTransfer.getData('text/plain'));
-      const positions = this.#tasks.map((t) => t.position);
-      const position = computeDropPosition(positions, positions.length);
-
-      this.dispatchEvent(new CustomEvent('task-drop', {
-        detail: { taskId, status: this.getAttribute('status'), position },
-        bubbles: true,
-        composed: true,
-      }));
-    });
     this.render();
+  }
+
+  /** Resalta la columna (la tarjeta arrastrada está encima). Lo llama task-card durante el arrastre. */
+  highlight() {
+    this.shadowRoot.querySelector('.column')?.classList.add('drag-over');
+  }
+
+  /** Quita el resalte. */
+  unhighlight() {
+    this.shadowRoot.querySelector('.column')?.classList.remove('drag-over');
+  }
+
+  /** Acepta una tarea soltada aquí: calcula su nueva posición y avisa hacia fuera con task-drop. */
+  acceptDrop(taskId) {
+    this.unhighlight();
+
+    const positions = this.#tasks.map((t) => t.position);
+    const position = computeDropPosition(positions, positions.length);
+
+    this.dispatchEvent(new CustomEvent('task-drop', {
+      detail: { taskId, status: this.getAttribute('status'), position },
+      bubbles: true,
+      composed: true,
+    }));
   }
 
   /** Pinta la columna: su título y una <task-card> por cada tarea. */
@@ -48,16 +51,23 @@ export class BoardColumn extends HTMLElement {
     const title = this.getAttribute('title') ?? '';
     this.shadowRoot.innerHTML = `
       <style>
+        :host {
+          display: block;
+        }
         .column {
+          height: 100%;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
           background: #ebecf0;
           border-radius: 8px;
           padding: 8px;
           min-width: 260px;
-          flex: 1 0 260px;
           transition: background .15s ease;
         }
         .column.drag-over { background: #dcdfe6; }
         h2 { font-size: 13px; text-transform: uppercase; color: #5e6c84; margin: 4px 8px 12px; }
+        .cards { flex: 1; }
       </style>
       <div class="column">
         <h2>${title}</h2>
