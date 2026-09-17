@@ -1,4 +1,5 @@
 import { api } from '../services/api.js';
+import { buttonStyles, formStyles } from '../styles/shared.js';
 
 export class RegisterForm extends HTMLElement {
   /** Prepara el Shadow DOM y pinta el formulario. */
@@ -11,18 +12,20 @@ export class RegisterForm extends HTMLElement {
   render() {
     this.shadowRoot.innerHTML = `
       <style>
-        form { max-width: 320px; margin: 64px auto; display: flex; flex-direction: column; gap: 8px; }
-        input { padding: 8px; border: 1px solid #dfe1e6; border-radius: 4px; }
-        button { padding: 8px; background: #4f46e5; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-        .error { color: #b91c1c; font-size: 12px; }
+        ${buttonStyles}
+        ${formStyles}
+        :host { display: block; font-family: system-ui, sans-serif; }
+        form { display: flex; flex-direction: column; gap: 4px; }
+        input { margin-bottom: 4px; }
+        button { width: 100%; margin-top: 8px; }
+        .error { color: var(--color-danger); font-size: 12px; margin: 4px 0 0; }
       </style>
       <form>
-        <h2>Crear cuenta</h2>
         <input name="name" placeholder="Nombre" autocomplete="name" required>
         <input name="email" type="email" placeholder="Email" autocomplete="email" required>
         <input name="password" type="password" placeholder="Contraseña (mín. 6)" autocomplete="new-password" required minlength="6">
         <p class="error" hidden></p>
-        <button type="submit">Registrarme</button>
+        <button type="submit" class="btn btn-primary">Registrarme</button>
       </form>
     `;
 

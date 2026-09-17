@@ -13,6 +13,17 @@ function safeColor(value) {
   return /^#[0-9a-fA-F]{6}$/.test(value ?? '') ? value : '#dfe1e6';
 }
 
+/** Colores de la píldora de prioridad: rojo para alta, ámbar para media, verde para baja. */
+const PRIORITY_PILL = {
+  high: { bg: '#fee2e2', fg: '#b91c1c' },
+  medium: { bg: '#fef3c7', fg: '#92400e' },
+  low: { bg: '#dcfce7', fg: '#166534' },
+};
+
+function priorityPillColors(priority) {
+  return PRIORITY_PILL[priority] ?? { bg: 'var(--color-surface-hover)', fg: 'var(--color-text-secondary)' };
+}
+
 export class TaskCard extends HTMLElement {
   #task = null;
 
@@ -89,33 +100,44 @@ export class TaskCard extends HTMLElement {
     if (!this.shadowRoot || !this.#task) return;
 
     const t = this.#task;
+    const pill = priorityPillColors(t.priority);
     this.shadowRoot.innerHTML = `
       <style>
+        :host { display: block; font-family: system-ui, sans-serif; }
         .card {
-          background: #fff;
-          border-radius: 8px;
+          background: var(--color-surface);
+          border-radius: var(--radius-sm);
           padding: 12px;
           margin-bottom: 8px;
-          box-shadow: 0 1px 2px rgba(0,0,0,.1);
+          box-shadow: var(--shadow-sm);
           border-left: 4px solid ${safeColor(t.color)};
           transition: transform .15s ease, box-shadow .15s ease;
           animation: card-in .2s ease-out;
+          cursor: grab;
         }
         @keyframes card-in {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        :host(.dragging) .card { transform: scale(1.03); box-shadow: 0 4px 10px rgba(0,0,0,.2); }
-        h3 { margin: 0 0 4px; font-size: 14px; }
-        p { margin: 0 0 8px; font-size: 12px; color: #5e6c84; }
-        .meta { display: flex; justify-content: space-between; font-size: 11px; color: #5e6c84; }
+        :host(.dragging) .card { transform: scale(1.03); box-shadow: var(--shadow-md); cursor: grabbing; }
+        h3 { margin: 0 0 6px; font-size: 14px; color: var(--color-text); }
+        p { margin: 0 0 10px; font-size: 12px; color: var(--color-text-secondary); }
+        .meta { display: flex; align-items: center; justify-content: space-between; font-size: 11px; }
+        .priority-pill {
+          font-weight: 600;
+          padding: 2px 8px;
+          border-radius: 999px;
+          background: ${pill.bg};
+          color: ${pill.fg};
+        }
+        .due-date { color: var(--color-text-secondary); }
       </style>
       <div class="card">
         <h3>${escapeHtml(t.title)}</h3>
         ${t.description ? `<p>${escapeHtml(t.description)}</p>` : ''}
         <div class="meta">
-          <span>${escapeHtml(priorityLabel(t.priority))}</span>
-          <span>${escapeHtml(t.dueDate ?? '')}</span>
+          <span class="priority-pill">${escapeHtml(priorityLabel(t.priority))}</span>
+          <span class="due-date">${escapeHtml(t.dueDate ?? '')}</span>
         </div>
       </div>
     `;

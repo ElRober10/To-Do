@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Taskboard</title>
   <link rel="stylesheet" href="styles/base.css" />
+  <script>
+    (function () {
+      const stored = localStorage.getItem('taskboard-theme');
+      const theme = stored ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
 </head>
 <body>
   <app-board></app-board>

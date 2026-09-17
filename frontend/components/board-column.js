@@ -53,29 +53,76 @@ export class BoardColumn extends HTMLElement {
       <style>
         :host {
           display: block;
+          font-family: system-ui, sans-serif;
         }
         .column {
           height: 100%;
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
-          background: #ebecf0;
-          border-radius: 8px;
-          padding: 8px;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow-sm);
+          padding: 12px;
           min-width: 260px;
-          transition: background .15s ease;
+          transition: background .15s ease, box-shadow .15s ease;
         }
-        .column.drag-over { background: #dcdfe6; }
-        h2 { font-size: 13px; text-transform: uppercase; color: #5e6c84; margin: 4px 8px 12px; }
-        .cards { flex: 1; }
+        .column.drag-over {
+          background: var(--color-surface-hover);
+          box-shadow: 0 0 0 2px var(--color-primary) inset;
+        }
+        .column-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin: 2px 4px 12px;
+        }
+        h2 {
+          font-size: 13px;
+          text-transform: uppercase;
+          letter-spacing: .03em;
+          color: var(--color-text-secondary);
+          margin: 0;
+        }
+        .count {
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--color-text-secondary);
+          background: var(--color-bg);
+          border-radius: 999px;
+          padding: 2px 8px;
+        }
+        .cards { flex: 1; display: flex; flex-direction: column; }
+        .empty {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          text-align: center;
+          padding: 16px;
+        }
       </style>
       <div class="column">
-        <h2>${title}</h2>
+        <div class="column-header">
+          <h2>${title}</h2>
+          <span class="count">${this.#tasks.length}</span>
+        </div>
         <div class="cards"></div>
       </div>
     `;
 
     const container = this.shadowRoot.querySelector('.cards');
+    if (this.#tasks.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'empty';
+      empty.textContent = 'Sin tareas';
+      container.appendChild(empty);
+      return;
+    }
+
     for (const task of this.#tasks) {
       const card = document.createElement('task-card');
       card.task = task;

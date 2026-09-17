@@ -1,3 +1,5 @@
+import { buttonStyles, formStyles } from '../styles/shared.js';
+
 /** Escapa texto de usuario antes de insertarlo en innerHTML, para evitar XSS. */
 function escapeHtml(value) {
   const div = document.createElement('div');
@@ -39,17 +41,27 @@ export class TaskModal extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <style>
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; }
-        .modal { background: #fff; border-radius: 8px; padding: 24px; width: min(420px, 90vw); animation: pop .15s ease; }
+        ${buttonStyles}
+        ${formStyles}
+        :host { font-family: system-ui, sans-serif; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .modal {
+          background: var(--color-surface);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow-md);
+          padding: 24px;
+          width: min(420px, 90vw);
+          animation: pop .15s ease;
+        }
         @keyframes pop { from { transform: scale(.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        label { display: block; font-size: 12px; margin: 12px 0 4px; }
-        input, textarea, select { width: 100%; padding: 8px; border: 1px solid #dfe1e6; border-radius: 4px; font: inherit; }
-        .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-        button { padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; }
-        button[type="submit"] { background: #4f46e5; color: #fff; }
+        h2 { margin: 0 0 4px; font-size: 16px; color: var(--color-text); }
+        input[type="color"] { padding: 2px; height: 36px; }
+        .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+        .actions .btn { width: auto; }
       </style>
       <div class="overlay">
         <form class="modal">
+          <h2>${t.id ? 'Editar tarea' : 'Nueva tarea'}</h2>
           <label>Título<input name="title" required value="${escapeHtml(t.title)}"></label>
           <label>Descripción<textarea name="description">${escapeHtml(t.description)}</textarea></label>
           <label>Prioridad
@@ -62,8 +74,8 @@ export class TaskModal extends HTMLElement {
           <label>Fecha límite<input type="date" name="dueDate" value="${escapeHtml(t.dueDate ?? '')}"></label>
           <label>Color<input type="color" name="color" value="${escapeHtml(t.color ?? '#4f46e5')}"></label>
           <div class="actions">
-            <button type="button" data-action="cancel">Cancelar</button>
-            <button type="submit">Guardar</button>
+            <button type="button" class="btn btn-secondary" data-action="cancel">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
           </div>
         </form>
       </div>
