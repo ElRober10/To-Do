@@ -113,7 +113,9 @@ export class AppBoard extends HTMLElement {
       <style>
         :host { display: block; }
         .auth-screen {
-          min-height: 100vh;
+          position: fixed;
+          inset: 0;
+          overflow-y: auto;
           display: flex;
           align-items: center;
           justify-content: center;
