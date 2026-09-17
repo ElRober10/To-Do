@@ -47,7 +47,7 @@ final class TaskService
             'status' => $status,
             'priority' => $this->validPriority($data['priority'] ?? 'medium'),
             'color' => $this->validColor($data['color'] ?? null),
-            'due_date' => $data['dueDate'] ?? null,
+            'due_date' => $this->normalizeDueDate($data['dueDate'] ?? null),
             'position' => $position,
         ]);
 
@@ -66,7 +66,7 @@ final class TaskService
             'description' => $data['description'] ?? $task['description'],
             'priority' => $this->validPriority($data['priority'] ?? $task['priority']),
             'color' => $this->validColor($data['color'] ?? $task['color']),
-            'due_date' => $data['dueDate'] ?? $task['due_date'],
+            'due_date' => $this->normalizeDueDate($data['dueDate'] ?? $task['due_date']),
         ]);
 
         $row = $this->tasks->find($taskId);
@@ -125,6 +125,12 @@ final class TaskService
         }
 
         return $priority;
+    }
+
+    /** Convierte una fecha vacía ('') en null: una columna DATE de MySQL rechaza el string vacío. */
+    private function normalizeDueDate(?string $dueDate): ?string
+    {
+        return $dueDate === '' ? null : $dueDate;
     }
 
     /** Comprueba que el color sea un hexadecimal válido (#rrggbb) o esté vacío. */

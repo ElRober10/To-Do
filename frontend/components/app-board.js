@@ -1,4 +1,5 @@
 import './board-column.js';
+import './task-modal.js';
 import { api } from '../services/api.js';
 
 const STATUSES = [
@@ -28,6 +29,17 @@ export class AppBoard extends HTMLElement {
     this.render();
 
     this.shadowRoot.addEventListener('task-drop', (event) => this.handleTaskDrop(event));
+
+    this.shadowRoot.addEventListener('task-save', async (event) => {
+      await api.createTask({ boardId: this.#board.id, ...event.detail });
+      const { tasks } = await api.listTasks(this.#board.id);
+      this.#tasks = tasks;
+      this.render();
+    });
+
+    this.shadowRoot.addEventListener('task-cancel', () => {
+      this.shadowRoot.querySelector('task-modal').close();
+    });
   }
 
   /** Trae (o crea) el primer tablero del usuario y sus tareas. */
@@ -66,9 +78,13 @@ export class AppBoard extends HTMLElement {
     this.shadowRoot.innerHTML = '<p style="padding:16px">Inicia sesión para ver tu tablero.</p>';
   }
 
-  /** Pinta las 5 columnas, cada una con las tareas de su estado ordenadas por posición. */
+  /** Pinta el botón de nueva tarea, las 5 columnas y el modal (oculto hasta que se abre). */
   render() {
-    this.shadowRoot.innerHTML = '<div class="board"></div>';
+    this.shadowRoot.innerHTML = '<button id="add">+ Nueva tarea</button><div class="board"></div><task-modal></task-modal>';
+    this.shadowRoot.querySelector('#add').addEventListener('click', () => {
+      this.shadowRoot.querySelector('task-modal').open(null);
+    });
+
     const board = this.shadowRoot.querySelector('.board');
     board.style.cssText = 'display:flex;gap:16px;padding:16px;overflow-x:auto;';
 
