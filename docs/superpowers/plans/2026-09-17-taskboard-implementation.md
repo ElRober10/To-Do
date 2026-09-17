@@ -48,6 +48,7 @@ app/
   Controllers/Api/TaskController.php
 public/
   index.php
+routes.php
 database/
   schema.sql
 frontend/
@@ -973,7 +974,7 @@ git commit -m "feat: add AuthMiddleware, AuthController and front controller wir
 - Crear: `app/Repositories/BoardRepository.php`
 - Crear: `app/Services/BoardService.php`
 - Crear: `app/Controllers/Api/BoardController.php`
-- Modificar: `public/index.php` (register board routes)
+- Modificar: `routes.php` (registra las rutas de boards)
 - Test: `tests/Unit/Services/BoardServiceTest.php`
 
 **Interfaces:**
@@ -1147,7 +1148,7 @@ final class BoardController
 }
 ```
 
-- [ ] **Paso 5: Registra las rutas en `public/index.php`**
+- [ ] **Paso 5: Registra las rutas en `routes.php`**
 
 Añade después de las rutas de auth:
 
@@ -1219,7 +1220,7 @@ Esperado: PASS (3 tests) una vez existan los archivos de los pasos 1-3.
 - [ ] **Paso 8: Commit**
 
 ```bash
-git add app/Models/Board.php app/Repositories/BoardRepository.php app/Services/BoardService.php app/Controllers/Api/BoardController.php public/index.php tests/Unit/Services/BoardServiceTest.php
+git add app/Models/Board.php app/Repositories/BoardRepository.php app/Services/BoardService.php app/Controllers/Api/BoardController.php routes.php tests/Unit/Services/BoardServiceTest.php
 git commit -m "feat: add Board model, repository, service, controller and routes"
 ```
 
@@ -1232,7 +1233,7 @@ git commit -m "feat: add Board model, repository, service, controller and routes
 - Crear: `app/Repositories/TaskRepository.php`
 - Crear: `app/Services/TaskService.php`
 - Crear: `app/Controllers/Api/TaskController.php`
-- Modificar: `public/index.php` (register task routes)
+- Modificar: `routes.php` (registra las rutas de tasks)
 - Test: `tests/Unit/Services/TaskServiceTest.php`
 
 **Interfaces:**
@@ -1586,7 +1587,7 @@ final class TaskController
 }
 ```
 
-- [ ] **Paso 5: Registra las rutas en `public/index.php`**
+- [ ] **Paso 5: Registra las rutas en `routes.php`**
 
 ```php
 use App\Controllers\Api\TaskController;
@@ -1681,7 +1682,7 @@ Esperado: PASS (3 tests) una vez existan los archivos de los pasos 1-3.
 - [ ] **Paso 8: Commit**
 
 ```bash
-git add app/Models/Task.php app/Repositories/TaskRepository.php app/Services/TaskService.php app/Controllers/Api/TaskController.php public/index.php tests/Unit/Services/TaskServiceTest.php
+git add app/Models/Task.php app/Repositories/TaskRepository.php app/Services/TaskService.php app/Controllers/Api/TaskController.php routes.php tests/Unit/Services/TaskServiceTest.php
 git commit -m "feat: add Task model, repository, service with position logic, controller and routes"
 ```
 
