@@ -12,6 +12,7 @@ final class TaskService
 {
     private const VALID_STATUSES = ['backlog', 'planning', 'in_progress', 'testing', 'done'];
     private const VALID_PRIORITIES = ['low', 'medium', 'high'];
+    private const COLOR_PATTERN = '/^#[0-9a-fA-F]{6}$/';
 
     public function __construct(
         private readonly TaskRepository $tasks,
@@ -45,7 +46,7 @@ final class TaskService
             'description' => $data['description'] ?? null,
             'status' => $status,
             'priority' => $this->validPriority($data['priority'] ?? 'medium'),
-            'color' => $data['color'] ?? null,
+            'color' => $this->validColor($data['color'] ?? null),
             'due_date' => $data['dueDate'] ?? null,
             'position' => $position,
         ]);
@@ -64,7 +65,7 @@ final class TaskService
             'title' => $data['title'] ?? $task['title'],
             'description' => $data['description'] ?? $task['description'],
             'priority' => $this->validPriority($data['priority'] ?? $task['priority']),
-            'color' => $data['color'] ?? $task['color'],
+            'color' => $this->validColor($data['color'] ?? $task['color']),
             'due_date' => $data['dueDate'] ?? $task['due_date'],
         ]);
 
@@ -124,5 +125,19 @@ final class TaskService
         }
 
         return $priority;
+    }
+
+    /** Comprueba que el color sea un hexadecimal válido (#rrggbb) o esté vacío. */
+    private function validColor(?string $color): ?string
+    {
+        if ($color === null || $color === '') {
+            return null;
+        }
+
+        if (!preg_match(self::COLOR_PATTERN, $color)) {
+            throw new ApiException('El color debe ser un hexadecimal válido (#rrggbb)', 422);
+        }
+
+        return $color;
     }
 }
