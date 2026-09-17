@@ -52,6 +52,11 @@ export class TaskCard extends HTMLElement {
           box-shadow: 0 1px 2px rgba(0,0,0,.1);
           border-left: 4px solid ${safeColor(t.color)};
           transition: transform .15s ease, box-shadow .15s ease;
+          animation: card-in .2s ease-out;
+        }
+        @keyframes card-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         :host(.dragging) .card { transform: scale(1.03); box-shadow: 0 4px 10px rgba(0,0,0,.2); }
         h3 { margin: 0 0 4px; font-size: 14px; }
