@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 
 final class TaskServiceTest extends TestCase
 {
+    /** Título vacío (o solo espacios) debe rechazarse sin llegar a crear la tarea. */
     public function testCreateRejectsEmptyTitle(): void
     {
         $boardRepo = $this->createMock(BoardRepository::class);
@@ -26,6 +27,7 @@ final class TaskServiceTest extends TestCase
         $service->create(1, 1, ['title' => '  ']);
     }
 
+    /** Al crear, la tarea entra en "backlog" en la posición siguiente a la última existente en esa columna. */
     public function testCreateAssignsNextPositionInBacklog(): void
     {
         $boardRepo = $this->createMock(BoardRepository::class);
@@ -48,6 +50,7 @@ final class TaskServiceTest extends TestCase
         $this->assertSame(3, $task['position']);
     }
 
+    /** Mover una tarea a un estado que no es uno de los 5 válidos debe rechazarse sin tocar la BD. */
     public function testMoveStatusRejectsInvalidStatus(): void
     {
         $boardRepo = $this->createMock(BoardRepository::class);

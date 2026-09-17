@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 final class RouterTest extends TestCase
 {
+    /** Comprueba que el Router encuentra la ruta con {id} y captura ese parámetro correctamente. */
     public function testDispatchesMatchingRouteWithParams(): void
     {
         $router = new Router();

@@ -19,6 +19,7 @@ final class AuthServiceTest extends TestCase
         $_SESSION = [];
     }
 
+    /** Contraseña de menos de 6 caracteres debe rechazarse sin llegar a crear el usuario. */
     public function testRegisterRejectsShortPassword(): void
     {
         $repo = $this->createMock(UserRepository::class);
@@ -30,6 +31,7 @@ final class AuthServiceTest extends TestCase
         $service->register('Rober', 'rober@example.com', '123');
     }
 
+    /** Email ya registrado debe rechazarse sin llegar a crear el usuario. */
     public function testRegisterRejectsDuplicateEmail(): void
     {
         $repo = $this->createMock(UserRepository::class);
@@ -42,6 +44,7 @@ final class AuthServiceTest extends TestCase
         $service->register('Rober', 'rober@example.com', 'secret123');
     }
 
+    /** Email que no existe debe rechazar el login con el mismo error genérico que una contraseña incorrecta. */
     public function testLoginRejectsInvalidCredentials(): void
     {
         $repo = $this->createMock(UserRepository::class);
@@ -53,6 +56,7 @@ final class AuthServiceTest extends TestCase
         $service->login('nobody@example.com', 'whatever');
     }
 
+    /** Con email y contraseña correctos, el login devuelve los datos del usuario. */
     public function testLoginReturnsUserOnValidCredentials(): void
     {
         $hash = password_hash('secret123', PASSWORD_DEFAULT);

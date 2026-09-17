@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 final class BoardServiceTest extends TestCase
 {
+    /** Nombre de tablero vacío (o solo espacios) debe rechazarse sin llegar a crearlo. */
     public function testCreateRejectsEmptyName(): void
     {
         $repo = $this->createMock(BoardRepository::class);
@@ -22,6 +23,7 @@ final class BoardServiceTest extends TestCase
         $service->create(1, '   ');
     }
 
+    /** Tablero que existe pero pertenece a otro usuario debe dar el mismo error que si no existiera. */
     public function testGetOwnedThrowsWhenNotOwner(): void
     {
         $repo = $this->createMock(BoardRepository::class);
@@ -33,6 +35,7 @@ final class BoardServiceTest extends TestCase
         $service->getOwned(5, 1);
     }
 
+    /** Tablero que sí pertenece al usuario se devuelve normalmente. */
     public function testGetOwnedReturnsBoardWhenOwner(): void
     {
         $repo = $this->createMock(BoardRepository::class);
