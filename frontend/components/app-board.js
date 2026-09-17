@@ -6,7 +6,7 @@ import { api } from '../services/api.js';
 import { buttonStyles } from '../styles/shared.js';
 
 const STATUSES = [
-  { key: 'backlog', label: 'Idea' },
+  { key: 'backlog', label: 'Descripción y requisitos' },
   { key: 'planning', label: 'Planificación' },
   { key: 'in_progress', label: 'Ejecución' },
   { key: 'testing', label: 'Pruebas' },
@@ -215,6 +215,7 @@ export class AppBoard extends HTMLElement {
 
         .board {
           display: flex;
+          justify-content: center;
           gap: 16px;
           padding: 24px;
           overflow-x: auto;
