@@ -19,6 +19,8 @@ export class AppBoard extends HTMLElement {
   #board = null;
   #tasks = [];
   #user = null;
+  #authMode = 'login';
+  #authListenerAttached = false;
 
   /** Al insertarse en el DOM: comprueba sesión, carga el tablero (o el aviso de login) y pinta. */
   async connectedCallback() {
@@ -88,6 +90,7 @@ export class AppBoard extends HTMLElement {
   async logout() {
     await api.logout();
     this.#user = null;
+    this.#authMode = 'login';
     this.renderLoginRequired();
   }
 
@@ -102,8 +105,10 @@ export class AppBoard extends HTMLElement {
     `;
   }
 
-  /** Sin sesión activa: muestra login + registro como una tarjeta centrada, y al autenticarse con éxito carga el tablero. */
+  /** Sin sesión activa: muestra el formulario de login O el de registro (nunca los dos), con un enlace para alternar. */
   renderLoginRequired() {
+    const isLogin = this.#authMode === 'login';
+
     this.shadowRoot.innerHTML = `
       <style>
         :host { display: block; }
@@ -121,53 +126,65 @@ export class AppBoard extends HTMLElement {
           box-shadow: var(--shadow-md);
           padding: 32px;
           width: 100%;
-          max-width: 720px;
+          max-width: 360px;
+          font-family: system-ui, sans-serif;
         }
         .auth-card h1 {
-          margin: 0 0 24px;
+          margin: 0 0 4px;
           text-align: center;
           color: var(--color-text);
-          font-family: system-ui, sans-serif;
         }
-        .auth-forms {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
-        }
-        .auth-forms h2 {
-          font-size: 13px;
-          text-transform: uppercase;
-          letter-spacing: .04em;
+        .auth-card h2 {
+          margin: 0 0 20px;
+          text-align: center;
+          font-size: 14px;
+          font-weight: 500;
           color: var(--color-text-secondary);
-          margin: 0 0 12px;
-          font-family: system-ui, sans-serif;
         }
-        @media (max-width: 640px) {
-          .auth-forms { grid-template-columns: 1fr; }
+        .switch {
+          margin: 16px 0 0;
+          text-align: center;
+          font-size: 13px;
+          color: var(--color-text-secondary);
+        }
+        .switch button {
+          font: inherit;
+          font-weight: 600;
+          color: var(--color-primary);
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0;
         }
       </style>
       <div class="auth-screen">
         <div class="auth-card">
           <h1>Taskboard</h1>
-          <div class="auth-forms">
-            <div>
-              <h2>Entrar</h2>
-              <login-form></login-form>
-            </div>
-            <div>
-              <h2>Crear cuenta</h2>
-              <register-form></register-form>
-            </div>
-          </div>
+          <h2>${isLogin ? 'Inicia sesión para continuar' : 'Crea tu cuenta'}</h2>
+          ${isLogin ? '<login-form></login-form>' : '<register-form></register-form>'}
+          <p class="switch">
+            ${isLogin ? '¿No tienes cuenta? ' : '¿Ya tienes cuenta? '}
+            <button type="button" data-action="switch-auth">${isLogin ? 'Regístrate' : 'Inicia sesión'}</button>
+          </p>
         </div>
       </div>
     `;
-    this.shadowRoot.addEventListener('auth-success', async () => {
-      const { user } = await api.me();
-      this.#user = user;
-      await this.loadBoard();
-      this.render();
-    }, { once: true });
+
+    this.shadowRoot.querySelector('[data-action="switch-auth"]').addEventListener('click', () => {
+      this.#authMode = isLogin ? 'register' : 'login';
+      this.renderLoginRequired();
+    });
+
+    if (!this.#authListenerAttached) {
+      this.#authListenerAttached = true;
+      this.shadowRoot.addEventListener('auth-success', async () => {
+        this.#authListenerAttached = false;
+        const { user } = await api.me();
+        this.#user = user;
+        await this.loadBoard();
+        this.render();
+      }, { once: true });
+    }
   }
 
   /** Pinta la cabecera (título, nueva tarea, tema, usuario y logout), las 5 columnas y el modal. */
