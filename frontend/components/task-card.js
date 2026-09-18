@@ -13,6 +13,23 @@ function priorityPillColors(priority) {
   return PRIORITY_PILL[priority] ?? { bg: 'var(--color-surface-hover)', fg: 'var(--color-text-secondary)' };
 }
 
+/** Días de retraso de una fecha límite (0 si no está atrasada o no hay fecha). */
+function daysOverdue(dueDate) {
+  if (!dueDate) return 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(`${dueDate}T00:00:00`);
+  const diffDays = Math.round((today - due) / 86400000);
+
+  return Math.max(diffDays, 0);
+}
+
+/** Texto "atrasada hace X día(s)" para mostrar bajo la fecha límite vencida. */
+function overdueText(days) {
+  return `Atrasada hace ${days} día${days === 1 ? '' : 's'}`;
+}
+
 export class TaskCard extends HTMLElement {
   #task = null;
 
@@ -129,6 +146,7 @@ export class TaskCard extends HTMLElement {
 
     const t = this.#task;
     const pill = priorityPillColors(t.priority);
+    const overdueDays = daysOverdue(t.dueDate);
     this.shadowRoot.innerHTML = `
       <style>
         :host { display: block; font-family: system-ui, sans-serif; }
@@ -160,6 +178,7 @@ export class TaskCard extends HTMLElement {
           color: ${pill.fg};
         }
         .due-date { color: var(--color-text-secondary); }
+        .overdue { margin: 4px 0 0; font-size: 11px; font-weight: 600; color: var(--color-danger); }
         .checklist-progress { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 11px; color: var(--color-text-secondary); }
         .checklist-progress .bar { flex: 1; height: 4px; border-radius: 2px; background: var(--color-surface-hover); overflow: hidden; }
         .checklist-progress .fill { height: 100%; background: #16a34a; border-radius: 2px; transition: width .15s ease; }
@@ -172,6 +191,7 @@ export class TaskCard extends HTMLElement {
           <span class="priority-pill">${escapeHtml(priorityLabel(t.priority))}</span>
           <span class="due-date">${escapeHtml(t.dueDate ?? '')}</span>
         </div>
+        ${overdueDays > 0 ? `<p class="overdue">${overdueText(overdueDays)}</p>` : ''}
       </div>
     `;
   }

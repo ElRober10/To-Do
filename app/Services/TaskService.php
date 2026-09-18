@@ -88,7 +88,7 @@ final class TaskService
             'description' => $data['description'] ?? $task['description'],
             'priority' => $this->validPriority($data['priority'] ?? $task['priority']),
             'color' => $this->validColor($data['color'] ?? $task['color']),
-            'due_date' => $this->normalizeDueDate($data['dueDate'] ?? $task['due_date']),
+            'due_date' => $this->resolveDueDateForUpdate($data['dueDate'] ?? null, $task['due_date']),
         ]);
 
         $row = $this->tasks->find($taskId);
@@ -155,10 +155,45 @@ final class TaskService
         return $priority;
     }
 
-    /** Convierte una fecha vacía ('') en null: una columna DATE de MySQL rechaza el string vacío. */
+    /**
+     * El formulario de edición siempre manda dueDate, aunque el usuario no la haya tocado.
+     * Si no cambia respecto a la guardada, se conserva tal cual (sin validar): una tarea con
+     * fecha ya pasada debe poder seguir editándose sin que ese campo, intacto, la bloquee.
+     * Solo se valida (y puede rechazarse) cuando la fecha es realmente distinta a la actual.
+     */
+    private function resolveDueDateForUpdate(?string $newDueDate, ?string $currentDueDate): ?string
+    {
+        $normalizedNew = $newDueDate === '' ? null : $newDueDate;
+
+        if ($normalizedNew === $currentDueDate) {
+            return $currentDueDate;
+        }
+
+        return $this->normalizeDueDate($newDueDate);
+    }
+
+    /**
+     * Convierte una fecha vacía ('') en null (una columna DATE de MySQL rechaza el string vacío)
+     * y rechaza fechas anteriores a hoy.
+     */
     private function normalizeDueDate(?string $dueDate): ?string
     {
-        return $dueDate === '' ? null : $dueDate;
+        if ($dueDate === null || $dueDate === '') {
+            return null;
+        }
+
+        $today = new \DateTimeImmutable('today');
+        $parsed = \DateTimeImmutable::createFromFormat('Y-m-d', $dueDate);
+
+        if ($parsed === false || $parsed->format('Y-m-d') !== $dueDate) {
+            throw new ApiException('Fecha límite inválida', 422);
+        }
+
+        if ($parsed < $today) {
+            throw new ApiException('La fecha límite no puede ser anterior a hoy', 422);
+        }
+
+        return $dueDate;
     }
 
     /** Comprueba que el color sea un hexadecimal válido (#rrggbb) o esté vacío. */
