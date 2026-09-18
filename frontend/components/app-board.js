@@ -55,12 +55,18 @@ export class AppBoard extends HTMLElement {
     this.shadowRoot.addEventListener('task-drop', (event) => this.handleTaskDrop(event));
 
     this.shadowRoot.addEventListener('task-save', async (event) => {
-      const { id, ...data } = event.detail;
+      const { id, checklistDiff, ...data } = event.detail;
+      let taskId = id;
+
       if (id) {
         await api.updateTask(id, data);
       } else {
-        await api.createTask({ boardId: this.#board.id, ...data });
+        const { task } = await api.createTask({ boardId: this.#board.id, ...data });
+        taskId = task.id;
       }
+
+      await this.applyChecklistDiff(taskId, checklistDiff);
+
       const { tasks } = await api.listTasks(this.#board.id);
       this.#tasks = tasks;
       this.render();
@@ -74,12 +80,21 @@ export class AppBoard extends HTMLElement {
     this.shadowRoot.addEventListener('task-edit', (event) => {
       this.shadowRoot.querySelector('task-modal').open(event.detail);
     });
+  }
 
-    /** La checklist se guarda al instante dentro del modal (no espera a "Guardar"); aquí solo actualizamos la copia local, sin repintar el tablero — repintar cerraría el modal de golpe (render() lo recrea oculto). Se refleja en la tarjeta al cerrar (task-save o task-cancel). */
-    this.shadowRoot.addEventListener('checklist-change', (event) => {
-      const { taskId, checklistItems } = event.detail;
-      this.#tasks = this.#tasks.map((t) => (t.id === taskId ? { ...t, checklistItems } : t));
-    });
+  /** Aplica en la API los cambios de checklist hechos en el modal (la checklist vive en memoria hasta "Guardar", no se guarda al instante). */
+  async applyChecklistDiff(taskId, diff) {
+    if (!diff) return;
+
+    for (const text of diff.create ?? []) {
+      await api.createChecklistItem(taskId, text);
+    }
+    for (const item of diff.update ?? []) {
+      await api.updateChecklistItem(item.id, { completed: item.completed });
+    }
+    for (const itemId of diff.remove ?? []) {
+      await api.deleteChecklistItem(itemId);
+    }
   }
 
   /** Trae (o crea) el primer tablero del usuario y sus tareas. */

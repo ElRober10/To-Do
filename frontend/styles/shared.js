@@ -23,7 +23,7 @@ export const formStyles = `
     margin: 12px 0 4px;
     color: var(--color-text-secondary);
   }
-  input, textarea, select {
+  input:not([type="checkbox"]), textarea, select {
     width: 100%;
     box-sizing: border-box;
     font: inherit;
