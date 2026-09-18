@@ -218,8 +218,11 @@ export class AppBoard extends HTMLElement {
     const front = this.shadowRoot.querySelector('.face-front');
     const back = this.shadowRoot.querySelector('.face-back');
 
-    /** Ambas caras miden lo mismo (la más alta de las dos), para que el giro no cambie de tamaño la tarjeta. */
-    flip.style.height = `${Math.max(front.scrollHeight, back.scrollHeight)}px`;
+    /** Ambas caras miden lo mismo (la más alta de las dos): se fija en cada cara, no solo en el contenedor, porque align-items:start no las estira solo. */
+    const maxHeight = Math.max(front.scrollHeight, back.scrollHeight);
+    flip.style.height = `${maxHeight}px`;
+    front.style.height = `${maxHeight}px`;
+    back.style.height = `${maxHeight}px`;
     flip.classList.toggle('flipped', this.#authMode === 'register');
 
     this.shadowRoot.querySelectorAll('[data-action="switch-auth"]').forEach((button) => {

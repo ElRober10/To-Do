@@ -15,8 +15,7 @@ export class LoginForm extends HTMLElement {
         ${buttonStyles}
         ${formStyles}
         :host { display: block; font-family: system-ui, sans-serif; }
-        form { display: flex; flex-direction: column; gap: 4px; }
-        input { margin-bottom: 4px; }
+        form { display: flex; flex-direction: column; gap: 14px; }
         button { width: 100%; margin-top: 8px; }
         .error { color: var(--color-danger); font-size: 12px; margin: 4px 0 0; }
       </style>
