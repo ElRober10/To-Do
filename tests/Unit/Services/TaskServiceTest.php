@@ -71,6 +71,52 @@ final class TaskServiceTest extends TestCase
         $service->moveStatus(5, 1, 'estado_invalido', 0);
     }
 
+    /** Mover una tarea a "testing" o "done" con pasos de checklist sin completar debe rechazarse. */
+    public function testMoveStatusRejectsTestingWithPendingChecklistItems(): void
+    {
+        $boardRepo = $this->createMock(BoardRepository::class);
+        $boardRepo->method('find')->willReturn(['id' => 1, 'user_id' => 1, 'name' => 'B']);
+
+        $taskRepo = $this->createMock(TaskRepository::class);
+        $taskRepo->method('find')->willReturn([
+            'id' => 5, 'board_id' => 1, 'title' => 'X', 'description' => null,
+            'status' => 'in_progress', 'priority' => 'medium', 'color' => null,
+            'due_date' => null, 'position' => 0,
+        ]);
+        $taskRepo->expects($this->never())->method('updateStatusAndPosition');
+
+        $checklistRepo = $this->createMock(ChecklistItemRepository::class);
+        $checklistRepo->method('hasPendingItems')->with(5)->willReturn(true);
+
+        $service = new TaskService($taskRepo, new BoardService($boardRepo), $checklistRepo);
+
+        $this->expectException(ApiException::class);
+        $service->moveStatus(5, 1, 'testing', 0);
+    }
+
+    /** Con la checklist completa (o sin checklist), mover a "testing"/"done" sí debe permitirse. */
+    public function testMoveStatusAllowsTestingWithoutPendingChecklistItems(): void
+    {
+        $boardRepo = $this->createMock(BoardRepository::class);
+        $boardRepo->method('find')->willReturn(['id' => 1, 'user_id' => 1, 'name' => 'B']);
+
+        $taskRepo = $this->createMock(TaskRepository::class);
+        $taskRepo->method('find')->willReturn([
+            'id' => 5, 'board_id' => 1, 'title' => 'X', 'description' => null,
+            'status' => 'testing', 'priority' => 'medium', 'color' => null,
+            'due_date' => null, 'position' => 0,
+        ]);
+        $taskRepo->expects($this->once())->method('updateStatusAndPosition')->with(5, 'testing', 0);
+
+        $checklistRepo = $this->createMock(ChecklistItemRepository::class);
+        $checklistRepo->method('hasPendingItems')->with(5)->willReturn(false);
+
+        $service = new TaskService($taskRepo, new BoardService($boardRepo), $checklistRepo);
+        $task = $service->moveStatus(5, 1, 'testing', 0);
+
+        $this->assertSame('testing', $task['status']);
+    }
+
     /** listForBoard debe adjuntar a cada tarea su propia checklist (y [] si no tiene pasos). */
     public function testListForBoardAttachesChecklistItemsToEachTask(): void
     {

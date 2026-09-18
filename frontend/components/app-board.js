@@ -80,6 +80,22 @@ export class AppBoard extends HTMLElement {
     this.shadowRoot.addEventListener('task-edit', (event) => {
       this.shadowRoot.querySelector('task-modal').open(event.detail);
     });
+
+    this.shadowRoot.addEventListener('task-blocked', (event) => {
+      this.showToast(event.detail.message);
+    });
+  }
+
+  /** Muestra un aviso flotante temporal (p.ej. al bloquear un movimiento inválido). */
+  showToast(message) {
+    this.shadowRoot.querySelector('.toast')?.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    this.shadowRoot.appendChild(toast);
+
+    setTimeout(() => toast.remove(), 6000);
   }
 
   /** Aplica en la API los cambios de checklist hechos en el modal (la checklist vive en memoria hasta "Guardar", no se guarda al instante). */
@@ -120,6 +136,7 @@ export class AppBoard extends HTMLElement {
     } catch (err) {
       this.#tasks = previous;
       this.render();
+      this.showToast(err.message ?? 'No se pudo mover la tarea');
     }
   }
 
@@ -325,6 +342,28 @@ export class AppBoard extends HTMLElement {
         }
         @media (max-width: 768px) {
           .board { flex-direction: column; overflow-x: visible; min-height: auto; }
+        }
+
+        .toast {
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: var(--color-danger);
+          color: #fff;
+          padding: 10px 18px;
+          border-radius: var(--radius-sm);
+          box-shadow: var(--shadow-md);
+          font-size: 13px;
+          font-family: system-ui, sans-serif;
+          max-width: min(360px, calc(100vw - 32px));
+          text-align: center;
+          z-index: 300;
+          animation: toast-in .15s ease;
+        }
+        @keyframes toast-in {
+          from { opacity: 0; transform: translate(-50%, -8px); }
+          to { opacity: 1; transform: translate(-50%, 0); }
         }
       </style>
       <header class="topbar">

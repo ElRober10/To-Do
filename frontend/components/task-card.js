@@ -89,6 +89,20 @@ export class TaskCard extends HTMLElement {
       });
 
       if (moved) {
+        const targetStatus = hoveredColumn?.getAttribute('status');
+        const blocksIncompleteChecklist = targetStatus === 'testing' || targetStatus === 'done';
+        const hasPendingChecklistItems = (this.#task.checklistItems ?? []).some((item) => !item.completed);
+
+        if (blocksIncompleteChecklist && hasPendingChecklistItems) {
+          hoveredColumn?.unhighlight();
+          this.dispatchEvent(new CustomEvent('task-blocked', {
+            detail: { message: 'No puedes mover una tarea con pasos de checklist sin completar a Pruebas o Producción.' },
+            bubbles: true,
+            composed: true,
+          }));
+          return;
+        }
+
         hoveredColumn?.acceptDrop(this.#task.id);
       } else {
         hoveredColumn?.unhighlight();

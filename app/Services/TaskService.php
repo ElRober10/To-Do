@@ -15,6 +15,7 @@ final class TaskService
     private const VALID_STATUSES = ['backlog', 'planning', 'in_progress', 'testing', 'done'];
     private const VALID_PRIORITIES = ['low', 'medium', 'high'];
     private const COLOR_PATTERN = '/^#[0-9a-fA-F]{6}$/';
+    private const STATUSES_REQUIRING_COMPLETE_CHECKLIST = ['testing', 'done'];
 
     public function __construct(
         private readonly TaskRepository $tasks,
@@ -101,6 +102,12 @@ final class TaskService
 
         if (!in_array($status, self::VALID_STATUSES, true)) {
             throw new ApiException('Estado inválido', 422);
+        }
+
+        if (in_array($status, self::STATUSES_REQUIRING_COMPLETE_CHECKLIST, true)
+            && $this->checklistItems->hasPendingItems($taskId)
+        ) {
+            throw new ApiException('No puedes mover una tarea con pasos de checklist sin completar a Pruebas o Producción', 422);
         }
 
         $this->tasks->updateStatusAndPosition($taskId, $status, $position);

@@ -33,6 +33,16 @@ class ChecklistItemRepository
         return $stmt->fetchAll();
     }
 
+    /** Indica si esa tarea tiene algún paso sin completar. */
+    public function hasPendingItems(int $taskId): bool
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT 1 FROM checklist_items WHERE task_id = :task_id AND completed = 0 LIMIT 1'
+        );
+        $stmt->execute(['task_id' => $taskId]);
+        return $stmt->fetch() !== false;
+    }
+
     /** Busca un paso por id; null si no existe. */
     public function find(int $id): ?array
     {
