@@ -37,16 +37,26 @@ export class AppBoard extends HTMLElement {
   #authMode = 'login';
   #authListenerAttached = false;
 
-  /** Al insertarse en el DOM: comprueba sesión, carga el tablero (o el aviso de login) y pinta. */
+  /** Al insertarse en el DOM: comprueba sesión, sincroniza con la URL actual (/, /register, /panel), carga el tablero (o el aviso de login) y pinta. */
   async connectedCallback() {
     this.attachShadow({ mode: 'open' });
+    window.addEventListener('popstate', () => this.handlePopState());
     this.renderLoading();
 
     const { user } = await api.me();
     this.#user = user;
+
     if (!user) {
+      this.#authMode = location.pathname === '/register' ? 'register' : 'login';
+      if (location.pathname !== '/' && location.pathname !== '/register') {
+        history.replaceState(null, '', '/');
+      }
       this.renderLoginRequired();
       return;
+    }
+
+    if (location.pathname !== '/panel') {
+      history.replaceState(null, '', '/panel');
     }
 
     await this.loadBoard();
@@ -155,6 +165,20 @@ export class AppBoard extends HTMLElement {
     await api.logout();
     this.#user = null;
     this.#authMode = 'login';
+    history.pushState(null, '', '/');
+    this.renderLoginRequired();
+  }
+
+  /** Reacciona al botón atrás/adelante del navegador, sincronizando la pantalla con la URL. */
+  handlePopState() {
+    if (this.#user) {
+      if (location.pathname !== '/panel') {
+        history.replaceState(null, '', '/panel');
+      }
+      return;
+    }
+
+    this.#authMode = location.pathname === '/register' ? 'register' : 'login';
     this.renderLoginRequired();
   }
 
@@ -276,6 +300,7 @@ export class AppBoard extends HTMLElement {
     this.shadowRoot.querySelectorAll('[data-action="switch-auth"]').forEach((button) => {
       button.addEventListener('click', () => {
         this.#authMode = this.#authMode === 'login' ? 'register' : 'login';
+        history.pushState(null, '', this.#authMode === 'register' ? '/register' : '/');
         flip.classList.toggle('flipped', this.#authMode === 'register');
       });
     });
@@ -287,6 +312,7 @@ export class AppBoard extends HTMLElement {
         const { user } = await api.me();
         this.#user = user;
         await this.loadBoard();
+        history.pushState(null, '', '/panel');
         this.render();
       }, { once: true });
     }
