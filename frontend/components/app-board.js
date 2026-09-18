@@ -121,10 +121,8 @@ export class AppBoard extends HTMLElement {
     `;
   }
 
-  /** Sin sesión activa: muestra el formulario de login O el de registro (nunca los dos), con un enlace para alternar. */
+  /** Sin sesión activa: tarjeta con animación de "voltear" (como una moneda) entre login (cara) y registro (cruz). */
   renderLoginRequired() {
-    const isLogin = this.#authMode === 'login';
-
     this.shadowRoot.innerHTML = `
       <style>
         :host { display: block; }
@@ -137,21 +135,38 @@ export class AppBoard extends HTMLElement {
           background: var(--color-bg);
           padding: 16px;
         }
-        .auth-card {
-          background: var(--color-surface);
-          border-radius: var(--radius);
-          box-shadow: var(--shadow-md);
-          padding: 32px;
+        .auth-wrap {
           width: 100%;
           max-width: 360px;
           font-family: system-ui, sans-serif;
         }
-        .auth-card h1 {
-          margin: 0 0 4px;
+        .auth-wrap > h1 {
+          margin: 0 0 20px;
           text-align: center;
           color: var(--color-text);
         }
-        .auth-card h2 {
+        .auth-flip-outer {
+          perspective: 1200px;
+        }
+        .auth-flip {
+          display: grid;
+          align-items: start;
+          transform-style: preserve-3d;
+          -webkit-transform-style: preserve-3d;
+          transition: transform .6s cubic-bezier(.4, .2, .2, 1), height .4s ease;
+        }
+        .auth-flip.flipped { transform: rotateY(180deg); }
+        .face {
+          grid-area: 1 / 1;
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+          background: var(--color-surface);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow-md);
+          padding: 32px;
+        }
+        .face-back { transform: rotateY(180deg); }
+        .face h2 {
           margin: 0 0 20px;
           text-align: center;
           font-size: 14px;
@@ -175,21 +190,44 @@ export class AppBoard extends HTMLElement {
         }
       </style>
       <div class="auth-screen">
-        <div class="auth-card">
+        <div class="auth-wrap">
           <h1>Taskboard</h1>
-          <h2>${isLogin ? 'Inicia sesión para continuar' : 'Crea tu cuenta'}</h2>
-          ${isLogin ? '<login-form></login-form>' : '<register-form></register-form>'}
-          <p class="switch">
-            ${isLogin ? '¿No tienes cuenta? ' : '¿Ya tienes cuenta? '}
-            <button type="button" data-action="switch-auth">${isLogin ? 'Regístrate' : 'Inicia sesión'}</button>
-          </p>
+          <div class="auth-flip-outer">
+            <div class="auth-flip">
+              <div class="face face-front">
+                <h2>Inicia sesión para continuar</h2>
+                <login-form></login-form>
+                <p class="switch">¿No tienes cuenta? <button type="button" data-action="switch-auth">Regístrate</button></p>
+              </div>
+              <div class="face face-back">
+                <h2>Crea tu cuenta</h2>
+                <register-form></register-form>
+                <p class="switch">¿Ya tienes cuenta? <button type="button" data-action="switch-auth">Inicia sesión</button></p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     `;
 
-    this.shadowRoot.querySelector('[data-action="switch-auth"]').addEventListener('click', () => {
-      this.#authMode = isLogin ? 'register' : 'login';
-      this.renderLoginRequired();
+    const flip = this.shadowRoot.querySelector('.auth-flip');
+    const front = this.shadowRoot.querySelector('.face-front');
+    const back = this.shadowRoot.querySelector('.face-back');
+
+    /** La cara de login y la de registro tienen distinta altura (el registro tiene un campo más); ajusta el contenedor a la que se ve. */
+    const syncFlipHeight = () => {
+      flip.style.height = `${(this.#authMode === 'login' ? front : back).scrollHeight}px`;
+    };
+
+    flip.classList.toggle('flipped', this.#authMode === 'register');
+    syncFlipHeight();
+
+    this.shadowRoot.querySelectorAll('[data-action="switch-auth"]').forEach((button) => {
+      button.addEventListener('click', () => {
+        this.#authMode = this.#authMode === 'login' ? 'register' : 'login';
+        flip.classList.toggle('flipped', this.#authMode === 'register');
+        syncFlipHeight();
+      });
     });
 
     if (!this.#authListenerAttached) {
