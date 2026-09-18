@@ -16,6 +16,22 @@ const STATUSES = [
 
 const THEME_KEY = 'taskboard-theme';
 
+const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
+
+/** Orden de las tarjetas dentro de una columna: prioridad (alta primero), luego fecha límite (más próxima primero, sin fecha al final), y la posición como desempate. */
+function compareTasks(a, b) {
+  const byPriority = (PRIORITY_ORDER[a.priority] ?? 3) - (PRIORITY_ORDER[b.priority] ?? 3);
+  if (byPriority !== 0) return byPriority;
+
+  if (a.dueDate && b.dueDate) {
+    if (a.dueDate !== b.dueDate) return a.dueDate < b.dueDate ? -1 : 1;
+  } else if (a.dueDate || b.dueDate) {
+    return a.dueDate ? -1 : 1;
+  }
+
+  return a.position - b.position;
+}
+
 const SUN_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
 const MOON_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 
@@ -439,7 +455,7 @@ export class AppBoard extends HTMLElement {
       column.setAttribute('title', status.label);
       column.tasks = this.#tasks
         .filter((t) => t.status === status.key)
-        .sort((a, b) => a.position - b.position);
+        .sort(compareTasks);
       board.appendChild(column);
     }
   }

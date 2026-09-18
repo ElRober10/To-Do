@@ -30,6 +30,13 @@ function overdueText(days) {
   return `Atrasada hace ${days} día${days === 1 ? '' : 's'}`;
 }
 
+/** Formatea una fecha 'YYYY-MM-DD' como 'DD/MM/YYYY' para mostrarla en la tarjeta. */
+function formatDate(dueDate) {
+  if (!dueDate) return '';
+  const [year, month, day] = dueDate.split('-');
+  return `${day}/${month}/${year}`;
+}
+
 export class TaskCard extends HTMLElement {
   #task = null;
 
@@ -189,7 +196,7 @@ export class TaskCard extends HTMLElement {
         ${this.renderChecklistProgress(t.checklistItems)}
         <div class="meta">
           <span class="priority-pill">${escapeHtml(priorityLabel(t.priority))}</span>
-          <span class="due-date">${escapeHtml(t.dueDate ?? '')}</span>
+          <span class="due-date">${escapeHtml(formatDate(t.dueDate))}</span>
         </div>
         ${overdueDays > 0 ? `<p class="overdue">${overdueText(overdueDays)}</p>` : ''}
       </div>
