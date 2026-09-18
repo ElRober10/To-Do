@@ -125,11 +125,12 @@ export class TaskCard extends HTMLElement {
       <style>
         :host { display: block; font-family: system-ui, sans-serif; }
         .card {
-          background: var(--color-surface);
+          background: var(--color-surface-hover);
           border-radius: var(--radius-sm);
           padding: 12px;
           margin-bottom: 8px;
           box-shadow: var(--shadow-sm);
+          border: 1px solid var(--color-border);
           border-left: 4px solid ${priorityColor(t.priority)};
           transition: transform .15s ease, box-shadow .15s ease;
           animation: card-in .2s ease-out;
