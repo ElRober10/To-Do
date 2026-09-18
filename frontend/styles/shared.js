@@ -8,8 +8,9 @@ export const buttonStyles = `
     border-radius: var(--radius-sm);
     border: 1px solid transparent;
     cursor: pointer;
-    transition: background .15s ease, border-color .15s ease, color .15s ease;
+    transition: background .15s ease, border-color .15s ease, color .15s ease, transform .08s ease;
   }
+  .btn:active { transform: scale(.96); }
   .btn-primary { background: var(--color-primary); color: var(--color-primary-contrast); }
   .btn-primary:hover { background: var(--color-primary-hover); }
   .btn-secondary { background: transparent; color: var(--color-text); border-color: var(--color-border); }

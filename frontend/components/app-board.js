@@ -4,13 +4,7 @@ import './login-form.js';
 import './register-form.js';
 import { api } from '../services/api.js';
 import { buttonStyles } from '../styles/shared.js';
-
-/** Escapa texto de usuario antes de insertarlo en innerHTML, para evitar XSS. */
-function escapeHtml(value) {
-  const div = document.createElement('div');
-  div.textContent = value ?? '';
-  return div.innerHTML;
-}
+import { escapeHtml } from '../utils/html.js';
 
 const STATUSES = [
   { key: 'backlog', label: 'Descripción y requisitos' },
@@ -36,6 +30,7 @@ export class AppBoard extends HTMLElement {
   #user = null;
   #authMode = 'login';
   #authListenerAttached = false;
+  #boardEventsWired = false;
 
   /** Al insertarse en el DOM: comprueba sesión, sincroniza con la URL actual (/, /register, /panel), carga el tablero (o el aviso de login) y pinta. */
   async connectedCallback() {
@@ -61,6 +56,13 @@ export class AppBoard extends HTMLElement {
 
     await this.loadBoard();
     this.render();
+    this.wireBoardEvents();
+  }
+
+  /** Engancha los eventos del tablero (drag&drop, guardar/cancelar/editar tarea, avisos). Se llama tanto tras la carga inicial como justo después de iniciar sesión/registrarse en la misma visita, porque en ese segundo caso connectedCallback ya había terminado sin pasar por aquí. */
+  wireBoardEvents() {
+    if (this.#boardEventsWired) return;
+    this.#boardEventsWired = true;
 
     this.shadowRoot.addEventListener('task-drop', (event) => this.handleTaskDrop(event));
 
@@ -68,18 +70,25 @@ export class AppBoard extends HTMLElement {
       const { id, checklistDiff, ...data } = event.detail;
       let taskId = id;
 
-      if (id) {
-        await api.updateTask(id, data);
-      } else {
-        const { task } = await api.createTask({ boardId: this.#board.id, ...data });
-        taskId = task.id;
+      try {
+        if (id) {
+          await api.updateTask(id, data);
+        } else {
+          const { task } = await api.createTask({ boardId: this.#board.id, ...data });
+          taskId = task.id;
+        }
+
+        await this.applyChecklistDiff(taskId, checklistDiff);
+
+        const { tasks } = await api.listTasks(this.#board.id);
+        this.#tasks = tasks;
+        this.render();
+      } catch (err) {
+        this.showToast(err.message ?? 'No se pudo guardar la tarea');
+        this.shadowRoot.querySelector('task-modal')?.shadowRoot
+          .querySelector('button[type="submit"]')
+          ?.removeAttribute('disabled');
       }
-
-      await this.applyChecklistDiff(taskId, checklistDiff);
-
-      const { tasks } = await api.listTasks(this.#board.id);
-      this.#tasks = tasks;
-      this.render();
     });
 
     this.shadowRoot.addEventListener('task-cancel', () => {
@@ -263,6 +272,11 @@ export class AppBoard extends HTMLElement {
           border: none;
           cursor: pointer;
           padding: 0;
+          display: inline-block;
+          transition: transform .08s ease;
+        }
+        .switch button:active {
+          transform: scale(.92);
         }
       </style>
       <div class="auth-screen">
@@ -314,6 +328,7 @@ export class AppBoard extends HTMLElement {
         await this.loadBoard();
         history.pushState(null, '', '/panel');
         this.render();
+        this.wireBoardEvents();
       }, { once: true });
     }
   }

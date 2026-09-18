@@ -1,11 +1,5 @@
 import { buttonStyles, formStyles } from '../styles/shared.js';
-
-/** Escapa texto de usuario antes de insertarlo en innerHTML, para evitar XSS. */
-function escapeHtml(value) {
-  const div = document.createElement('div');
-  div.textContent = value ?? '';
-  return div.innerHTML;
-}
+import { escapeHtml } from '../utils/html.js';
 
 const TRASH_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
 
@@ -69,7 +63,8 @@ export class TaskModal extends HTMLElement {
         .checklist-items .checklist-spacer { width: 16px; height: 16px; flex: none; }
         .checklist-items li span { flex: 1; font-size: 13px; color: var(--color-text); }
         .checklist-items li span.done { text-decoration: line-through; color: var(--color-text-secondary); }
-        .checklist-items button { display: inline-flex; align-items: center; background: none; border: none; color: var(--color-text-secondary); cursor: pointer; padding: 4px; }
+        .checklist-items button { display: inline-flex; align-items: center; background: none; border: none; color: var(--color-text-secondary); cursor: pointer; padding: 4px; transition: transform .08s ease; }
+        .checklist-items button:active { transform: scale(.85); }
         .checklist-items button:hover { color: var(--color-danger); }
         .checklist-add { display: flex; gap: 8px; margin-top: 4px; }
         .checklist-add input { flex: 1; }
@@ -115,6 +110,11 @@ export class TaskModal extends HTMLElement {
     const form = this.shadowRoot.querySelector('form');
     form.addEventListener('submit', (event) => {
       event.preventDefault();
+
+      const submitButton = form.querySelector('button[type="submit"]');
+      if (submitButton.disabled) return;
+      submitButton.disabled = true;
+
       const data = Object.fromEntries(new FormData(form).entries());
       if (this.#task?.id) {
         data.id = this.#task.id;
