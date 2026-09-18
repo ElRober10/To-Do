@@ -6,8 +6,13 @@ namespace App\Repositories;
 
 use App\Core\Database;
 
-class ChecklistItemRepository
+class ChecklistItemRepository extends Repository
 {
+    protected function table(): string
+    {
+        return 'checklist_items';
+    }
+
     /** Lista los pasos de una tarea, ordenados por posición. */
     public function allForTask(int $taskId): array
     {
@@ -46,10 +51,7 @@ class ChecklistItemRepository
     /** Busca un paso por id; null si no existe. */
     public function find(int $id): ?array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM checklist_items WHERE id = :id LIMIT 1');
-        $stmt->execute(['id' => $id]);
-        $row = $stmt->fetch();
-        return $row === false ? null : $row;
+        return $this->findOneBy('id', $id);
     }
 
     /** Mayor posición usada actualmente en esa tarea (o -1 si no tiene pasos) — para saber dónde añadir el siguiente. */

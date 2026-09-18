@@ -40,7 +40,7 @@ final class BoardController
     public function show(Request $request): void
     {
         $userId = $this->auth->requireUserId();
-        $board = $this->boards->getOwned((int) $request->params()['id'], $userId);
+        $board = $this->boards->getOwned($request->intParam('id'), $userId);
         Response::json(['board' => $board]);
     }
 }

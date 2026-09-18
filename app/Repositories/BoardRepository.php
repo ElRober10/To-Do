@@ -6,8 +6,13 @@ namespace App\Repositories;
 
 use App\Core\Database;
 
-class BoardRepository
+class BoardRepository extends Repository
 {
+    protected function table(): string
+    {
+        return 'boards';
+    }
+
     /** Lista los tableros de un usuario, más recientes primero. */
     public function allForUser(int $userId): array
     {
@@ -19,10 +24,7 @@ class BoardRepository
     /** Busca un tablero por id, sin comprobar dueño (esa comprobación la hace el Service). */
     public function find(int $id): ?array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM boards WHERE id = :id LIMIT 1');
-        $stmt->execute(['id' => $id]);
-        $row = $stmt->fetch();
-        return $row === false ? null : $row;
+        return $this->findOneBy('id', $id);
     }
 
     /** Inserta un tablero nuevo para ese usuario y devuelve su id autogenerado. */

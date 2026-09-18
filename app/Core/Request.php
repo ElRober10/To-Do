@@ -68,4 +68,10 @@ final class Request
     {
         $this->params = $params;
     }
+
+    /** Parámetro de ruta convertido a int (ej. el {id} de /api/boards/{id}). */
+    public function intParam(string $key): int
+    {
+        return (int) $this->params[$key];
+    }
 }

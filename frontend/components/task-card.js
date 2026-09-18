@@ -1,12 +1,6 @@
 import { priorityLabel, priorityColor } from '../utils/priority.js';
 import { closestAcrossShadow, elementFromPointDeep } from '../utils/dom.js';
-
-/** Escapa texto de usuario antes de insertarlo en innerHTML, para evitar XSS. */
-function escapeHtml(value) {
-  const div = document.createElement('div');
-  div.textContent = value ?? '';
-  return div.innerHTML;
-}
+import { escapeHtml } from '../utils/html.js';
 
 /** Colores de la píldora de prioridad: rojo para alta, ámbar para media, verde para baja. */
 const PRIORITY_PILL = {

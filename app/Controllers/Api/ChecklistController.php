@@ -7,12 +7,9 @@ namespace App\Controllers\Api;
 use App\Core\Request;
 use App\Core\Response;
 use App\Middleware\AuthMiddleware;
-use App\Repositories\BoardRepository;
 use App\Repositories\ChecklistItemRepository;
-use App\Repositories\TaskRepository;
-use App\Services\BoardService;
 use App\Services\ChecklistService;
-use App\Services\TaskService;
+use App\Services\TaskServiceFactory;
 
 final class ChecklistController
 {
@@ -21,12 +18,7 @@ final class ChecklistController
 
     public function __construct()
     {
-        $tasksService = new TaskService(
-            new TaskRepository(),
-            new BoardService(new BoardRepository()),
-            new ChecklistItemRepository(),
-        );
-        $this->checklistService = new ChecklistService(new ChecklistItemRepository(), $tasksService);
+        $this->checklistService = new ChecklistService(new ChecklistItemRepository(), TaskServiceFactory::make());
         $this->auth = new AuthMiddleware();
     }
 
@@ -34,7 +26,7 @@ final class ChecklistController
     public function store(Request $request): void
     {
         $userId = $this->auth->requireUserId();
-        $taskId = (int) $request->params()['id'];
+        $taskId = $request->intParam('id');
         $item = $this->checklistService->create($taskId, $userId, $request->all());
         Response::json(['item' => $item], 201);
     }
@@ -43,7 +35,7 @@ final class ChecklistController
     public function update(Request $request): void
     {
         $userId = $this->auth->requireUserId();
-        $itemId = (int) $request->params()['id'];
+        $itemId = $request->intParam('id');
         $item = $this->checklistService->update($itemId, $userId, $request->all());
         Response::json(['item' => $item]);
     }
@@ -52,7 +44,7 @@ final class ChecklistController
     public function destroy(Request $request): void
     {
         $userId = $this->auth->requireUserId();
-        $itemId = (int) $request->params()['id'];
+        $itemId = $request->intParam('id');
         $this->checklistService->delete($itemId, $userId);
         Response::json(['ok' => true]);
     }

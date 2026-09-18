@@ -7,11 +7,8 @@ namespace App\Controllers\Api;
 use App\Core\Request;
 use App\Core\Response;
 use App\Middleware\AuthMiddleware;
-use App\Repositories\BoardRepository;
-use App\Repositories\ChecklistItemRepository;
-use App\Repositories\TaskRepository;
-use App\Services\BoardService;
 use App\Services\TaskService;
+use App\Services\TaskServiceFactory;
 
 final class TaskController
 {
@@ -20,11 +17,7 @@ final class TaskController
 
     public function __construct()
     {
-        $this->tasksService = new TaskService(
-            new TaskRepository(),
-            new BoardService(new BoardRepository()),
-            new ChecklistItemRepository(),
-        );
+        $this->tasksService = TaskServiceFactory::make();
         $this->auth = new AuthMiddleware();
     }
 
@@ -32,7 +25,7 @@ final class TaskController
     public function indexForBoard(Request $request): void
     {
         $userId = $this->auth->requireUserId();
-        $boardId = (int) $request->params()['id'];
+        $boardId = $request->intParam('id');
         Response::json(['tasks' => $this->tasksService->listForBoard($boardId, $userId)]);
     }
 
@@ -49,7 +42,7 @@ final class TaskController
     public function update(Request $request): void
     {
         $userId = $this->auth->requireUserId();
-        $taskId = (int) $request->params()['id'];
+        $taskId = $request->intParam('id');
         $task = $this->tasksService->update($taskId, $userId, $request->all());
         Response::json(['task' => $task]);
     }
@@ -58,7 +51,7 @@ final class TaskController
     public function updateStatus(Request $request): void
     {
         $userId = $this->auth->requireUserId();
-        $taskId = (int) $request->params()['id'];
+        $taskId = $request->intParam('id');
         $task = $this->tasksService->moveStatus(
             $taskId,
             $userId,
@@ -72,7 +65,7 @@ final class TaskController
     public function destroy(Request $request): void
     {
         $userId = $this->auth->requireUserId();
-        $taskId = (int) $request->params()['id'];
+        $taskId = $request->intParam('id');
         $this->tasksService->delete($taskId, $userId);
         Response::json(['ok' => true]);
     }

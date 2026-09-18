@@ -6,8 +6,13 @@ namespace App\Repositories;
 
 use App\Core\Database;
 
-class TaskRepository
+class TaskRepository extends Repository
 {
+    protected function table(): string
+    {
+        return 'tasks';
+    }
+
     /** Lista las tareas de un tablero, agrupadas por estado y ordenadas por posición dentro de cada columna. */
     public function allForBoard(int $boardId): array
     {
@@ -21,10 +26,7 @@ class TaskRepository
     /** Busca una tarea por id; null si no existe. */
     public function find(int $id): ?array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM tasks WHERE id = :id LIMIT 1');
-        $stmt->execute(['id' => $id]);
-        $row = $stmt->fetch();
-        return $row === false ? null : $row;
+        return $this->findOneBy('id', $id);
     }
 
     /** Mayor posición usada actualmente en esa columna (o -1 si está vacía) — para saber dónde añadir la siguiente. */
