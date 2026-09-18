@@ -56,4 +56,15 @@ export const api = {
 
   /** Borra una tarea. */
   deleteTask: (id) => request(`/tasks/${id}`, { method: 'DELETE' }),
+
+  /** Añade un paso nuevo a la checklist de una tarea. */
+  createChecklistItem: (taskId, text) =>
+    request(`/tasks/${taskId}/checklist-items`, { method: 'POST', body: JSON.stringify({ text }) }),
+
+  /** Edita el texto y/o marca/desmarca un paso de checklist. */
+  updateChecklistItem: (id, data) =>
+    request(`/checklist-items/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  /** Borra un paso de checklist. */
+  deleteChecklistItem: (id) => request(`/checklist-items/${id}`, { method: 'DELETE' }),
 };

@@ -55,7 +55,12 @@ export class AppBoard extends HTMLElement {
     this.shadowRoot.addEventListener('task-drop', (event) => this.handleTaskDrop(event));
 
     this.shadowRoot.addEventListener('task-save', async (event) => {
-      await api.createTask({ boardId: this.#board.id, ...event.detail });
+      const { id, ...data } = event.detail;
+      if (id) {
+        await api.updateTask(id, data);
+      } else {
+        await api.createTask({ boardId: this.#board.id, ...data });
+      }
       const { tasks } = await api.listTasks(this.#board.id);
       this.#tasks = tasks;
       this.render();
@@ -63,6 +68,17 @@ export class AppBoard extends HTMLElement {
 
     this.shadowRoot.addEventListener('task-cancel', () => {
       this.shadowRoot.querySelector('task-modal').close();
+      this.render();
+    });
+
+    this.shadowRoot.addEventListener('task-edit', (event) => {
+      this.shadowRoot.querySelector('task-modal').open(event.detail);
+    });
+
+    /** La checklist se guarda al instante dentro del modal (no espera a "Guardar"); aquí solo actualizamos la copia local, sin repintar el tablero — repintar cerraría el modal de golpe (render() lo recrea oculto). Se refleja en la tarjeta al cerrar (task-save o task-cancel). */
+    this.shadowRoot.addEventListener('checklist-change', (event) => {
+      const { taskId, checklistItems } = event.detail;
+      this.#tasks = this.#tasks.map((t) => (t.id === taskId ? { ...t, checklistItems } : t));
     });
   }
 

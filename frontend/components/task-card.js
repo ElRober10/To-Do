@@ -1,4 +1,4 @@
-import { priorityLabel } from '../utils/priority.js';
+import { priorityLabel, priorityColor } from '../utils/priority.js';
 import { closestAcrossShadow, elementFromPointDeep } from '../utils/dom.js';
 
 /** Escapa texto de usuario antes de insertarlo en innerHTML, para evitar XSS. */
@@ -6,11 +6,6 @@ function escapeHtml(value) {
   const div = document.createElement('div');
   div.textContent = value ?? '';
   return div.innerHTML;
-}
-
-/** Valida que sea un color hexadecimal (#rrggbb); si no, usa un gris neutro. Evita inyectar contenido dentro del <style>. */
-function safeColor(value) {
-  return /^#[0-9a-fA-F]{6}$/.test(value ?? '') ? value : '#dfe1e6';
 }
 
 /** Colores de la píldora de prioridad: rojo para alta, ámbar para media, verde para baja. */
@@ -52,6 +47,7 @@ export class TaskCard extends HTMLElement {
     const grabX = event.clientX - rect.left;
     const grabY = event.clientY - rect.top;
     let hoveredColumn = null;
+    let moved = false;
 
     this.setPointerCapture(event.pointerId);
     this.classList.add('dragging');
@@ -65,6 +61,10 @@ export class TaskCard extends HTMLElement {
     });
 
     const onMove = (moveEvent) => {
+      if (Math.abs(moveEvent.clientX - event.clientX) > 4 || Math.abs(moveEvent.clientY - event.clientY) > 4) {
+        moved = true;
+      }
+
       this.style.left = `${moveEvent.clientX - grabX}px`;
       this.style.top = `${moveEvent.clientY - grabY}px`;
 
@@ -88,11 +88,31 @@ export class TaskCard extends HTMLElement {
         position: '', zIndex: '', width: '', left: '', top: '', pointerEvents: '',
       });
 
-      hoveredColumn?.acceptDrop(this.#task.id);
+      if (moved) {
+        hoveredColumn?.acceptDrop(this.#task.id);
+      } else {
+        hoveredColumn?.unhighlight();
+        this.dispatchEvent(new CustomEvent('task-edit', { detail: this.#task, bubbles: true, composed: true }));
+      }
     };
 
     this.addEventListener('pointermove', onMove);
     this.addEventListener('pointerup', onUp);
+  }
+
+  /** HTML de la barra de progreso de checklist (vacío si la tarea no tiene pasos). */
+  renderChecklistProgress(items) {
+    if (!items || items.length === 0) return '';
+
+    const done = items.filter((item) => item.completed).length;
+    const percent = Math.round((done / items.length) * 100);
+
+    return `
+      <div class="checklist-progress">
+        <span>${done}/${items.length}</span>
+        <span class="bar"><span class="fill" style="width:${percent}%"></span></span>
+      </div>
+    `;
   }
 
   /** Pinta la tarjeta dentro de su Shadow DOM con los datos actuales. */
@@ -110,7 +130,7 @@ export class TaskCard extends HTMLElement {
           padding: 12px;
           margin-bottom: 8px;
           box-shadow: var(--shadow-sm);
-          border-left: 4px solid ${safeColor(t.color)};
+          border-left: 4px solid ${priorityColor(t.priority)};
           transition: transform .15s ease, box-shadow .15s ease;
           animation: card-in .2s ease-out;
           cursor: grab;
@@ -131,10 +151,14 @@ export class TaskCard extends HTMLElement {
           color: ${pill.fg};
         }
         .due-date { color: var(--color-text-secondary); }
+        .checklist-progress { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 11px; color: var(--color-text-secondary); }
+        .checklist-progress .bar { flex: 1; height: 4px; border-radius: 2px; background: var(--color-surface-hover); overflow: hidden; }
+        .checklist-progress .fill { height: 100%; background: #16a34a; border-radius: 2px; transition: width .15s ease; }
       </style>
       <div class="card">
         <h3>${escapeHtml(t.title)}</h3>
         ${t.description ? `<p>${escapeHtml(t.description)}</p>` : ''}
+        ${this.renderChecklistProgress(t.checklistItems)}
         <div class="meta">
           <span class="priority-pill">${escapeHtml(priorityLabel(t.priority))}</span>
           <span class="due-date">${escapeHtml(t.dueDate ?? '')}</span>
