@@ -164,6 +164,10 @@ export class AppBoard extends HTMLElement {
           border-radius: var(--radius);
           box-shadow: var(--shadow-md);
           padding: 32px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          box-sizing: border-box;
         }
         .face-back { transform: rotateY(180deg); }
         .face h2 {
@@ -214,19 +218,14 @@ export class AppBoard extends HTMLElement {
     const front = this.shadowRoot.querySelector('.face-front');
     const back = this.shadowRoot.querySelector('.face-back');
 
-    /** La cara de login y la de registro tienen distinta altura (el registro tiene un campo más); ajusta el contenedor a la que se ve. */
-    const syncFlipHeight = () => {
-      flip.style.height = `${(this.#authMode === 'login' ? front : back).scrollHeight}px`;
-    };
-
+    /** Ambas caras miden lo mismo (la más alta de las dos), para que el giro no cambie de tamaño la tarjeta. */
+    flip.style.height = `${Math.max(front.scrollHeight, back.scrollHeight)}px`;
     flip.classList.toggle('flipped', this.#authMode === 'register');
-    syncFlipHeight();
 
     this.shadowRoot.querySelectorAll('[data-action="switch-auth"]').forEach((button) => {
       button.addEventListener('click', () => {
         this.#authMode = this.#authMode === 'login' ? 'register' : 'login';
         flip.classList.toggle('flipped', this.#authMode === 'register');
-        syncFlipHeight();
       });
     });
 
