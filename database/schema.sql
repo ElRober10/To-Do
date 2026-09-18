@@ -33,3 +33,14 @@ CREATE TABLE tasks (
     CONSTRAINT fk_tasks_board FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
     INDEX idx_tasks_board_status (board_id, status)
 ) ENGINE=InnoDB;
+
+CREATE TABLE checklist_items (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    task_id INT UNSIGNED NOT NULL,
+    text VARCHAR(200) NOT NULL,
+    completed TINYINT(1) NOT NULL DEFAULT 0,
+    position INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_checklist_items_task FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+    INDEX idx_checklist_items_task (task_id)
+) ENGINE=InnoDB;

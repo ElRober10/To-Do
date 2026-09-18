@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Controllers\Api\AuthController;
 use App\Controllers\Api\BoardController;
+use App\Controllers\Api\ChecklistController;
 use App\Controllers\Api\TaskController;
 
 /** @var App\Core\Router $router */
@@ -28,3 +29,9 @@ $router->add('POST', '/api/tasks', [$tasks, 'store']);
 $router->add('PATCH', '/api/tasks/{id}', [$tasks, 'update']);
 $router->add('PATCH', '/api/tasks/{id}/status', [$tasks, 'updateStatus']);
 $router->add('DELETE', '/api/tasks/{id}', [$tasks, 'destroy']);
+
+$checklist = new ChecklistController();
+
+$router->add('POST', '/api/tasks/{id}/checklist-items', [$checklist, 'store']);
+$router->add('PATCH', '/api/checklist-items/{id}', [$checklist, 'update']);
+$router->add('DELETE', '/api/checklist-items/{id}', [$checklist, 'destroy']);

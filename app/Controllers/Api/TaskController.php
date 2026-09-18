@@ -8,6 +8,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Middleware\AuthMiddleware;
 use App\Repositories\BoardRepository;
+use App\Repositories\ChecklistItemRepository;
 use App\Repositories\TaskRepository;
 use App\Services\BoardService;
 use App\Services\TaskService;
@@ -19,7 +20,11 @@ final class TaskController
 
     public function __construct()
     {
-        $this->tasksService = new TaskService(new TaskRepository(), new BoardService(new BoardRepository()));
+        $this->tasksService = new TaskService(
+            new TaskRepository(),
+            new BoardService(new BoardRepository()),
+            new ChecklistItemRepository(),
+        );
         $this->auth = new AuthMiddleware();
     }
 

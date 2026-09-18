@@ -6,6 +6,7 @@ namespace Tests\Unit\Services;
 
 use App\Core\ApiException;
 use App\Repositories\BoardRepository;
+use App\Repositories\ChecklistItemRepository;
 use App\Repositories\TaskRepository;
 use App\Services\BoardService;
 use App\Services\TaskService;
@@ -21,7 +22,7 @@ final class TaskServiceTest extends TestCase
         $taskRepo = $this->createMock(TaskRepository::class);
         $taskRepo->expects($this->never())->method('create');
 
-        $service = new TaskService($taskRepo, new BoardService($boardRepo));
+        $service = new TaskService($taskRepo, new BoardService($boardRepo), $this->createMock(ChecklistItemRepository::class));
 
         $this->expectException(ApiException::class);
         $service->create(1, 1, ['title' => '  ']);
@@ -44,7 +45,7 @@ final class TaskServiceTest extends TestCase
             'due_date' => null, 'position' => 3,
         ]);
 
-        $service = new TaskService($taskRepo, new BoardService($boardRepo));
+        $service = new TaskService($taskRepo, new BoardService($boardRepo), $this->createMock(ChecklistItemRepository::class));
         $task = $service->create(1, 1, ['title' => 'Nueva']);
 
         $this->assertSame(3, $task['position']);
@@ -64,9 +65,36 @@ final class TaskServiceTest extends TestCase
         ]);
         $taskRepo->expects($this->never())->method('updateStatusAndPosition');
 
-        $service = new TaskService($taskRepo, new BoardService($boardRepo));
+        $service = new TaskService($taskRepo, new BoardService($boardRepo), $this->createMock(ChecklistItemRepository::class));
 
         $this->expectException(ApiException::class);
         $service->moveStatus(5, 1, 'estado_invalido', 0);
+    }
+
+    /** listForBoard debe adjuntar a cada tarea su propia checklist (y [] si no tiene pasos). */
+    public function testListForBoardAttachesChecklistItemsToEachTask(): void
+    {
+        $boardRepo = $this->createMock(BoardRepository::class);
+        $boardRepo->method('find')->willReturn(['id' => 1, 'user_id' => 1, 'name' => 'B']);
+
+        $taskRepo = $this->createMock(TaskRepository::class);
+        $taskRepo->method('allForBoard')->willReturn([
+            ['id' => 1, 'board_id' => 1, 'title' => 'Con pasos', 'description' => null,
+                'status' => 'backlog', 'priority' => 'medium', 'color' => null, 'due_date' => null, 'position' => 0],
+            ['id' => 2, 'board_id' => 1, 'title' => 'Sin pasos', 'description' => null,
+                'status' => 'backlog', 'priority' => 'medium', 'color' => null, 'due_date' => null, 'position' => 1],
+        ]);
+
+        $checklistRepo = $this->createMock(ChecklistItemRepository::class);
+        $checklistRepo->method('allForTaskIds')->with([1, 2])->willReturn([
+            ['id' => 10, 'task_id' => 1, 'text' => 'Paso 1', 'completed' => 0, 'position' => 0],
+        ]);
+
+        $service = new TaskService($taskRepo, new BoardService($boardRepo), $checklistRepo);
+        $tasks = $service->listForBoard(1, 1);
+
+        $this->assertCount(1, $tasks[0]['checklistItems']);
+        $this->assertSame('Paso 1', $tasks[0]['checklistItems'][0]['text']);
+        $this->assertSame([], $tasks[1]['checklistItems']);
     }
 }

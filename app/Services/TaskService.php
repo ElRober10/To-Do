@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Core\ApiException;
+use App\Models\ChecklistItem;
 use App\Models\Task;
+use App\Repositories\ChecklistItemRepository;
 use App\Repositories\TaskRepository;
 
 final class TaskService
@@ -17,18 +19,37 @@ final class TaskService
     public function __construct(
         private readonly TaskRepository $tasks,
         private readonly BoardService $boardsService,
+        private readonly ChecklistItemRepository $checklistItems,
     ) {
     }
 
-    /** Lista las tareas del tablero, comprobando antes que el tablero pertenece al usuario. */
+    /** Lista las tareas del tablero (con su checklist ya incluida), comprobando antes que el tablero pertenece al usuario. */
     public function listForBoard(int $boardId, int $userId): array
     {
         $this->boardsService->getOwned($boardId, $userId);
 
+        $rows = $this->tasks->allForBoard($boardId);
+        $taskIds = array_map(static fn (array $row) => (int) $row['id'], $rows);
+        $itemsByTask = $this->groupChecklistItemsByTask($this->checklistItems->allForTaskIds($taskIds));
+
         return array_map(
-            static fn (array $row) => Task::fromRow($row)->toArray(),
-            $this->tasks->allForBoard($boardId)
+            static function (array $row) use ($itemsByTask) {
+                $task = Task::fromRow($row)->toArray();
+                $task['checklistItems'] = $itemsByTask[$task['id']] ?? [];
+                return $task;
+            },
+            $rows
         );
+    }
+
+    /** Agrupa filas de checklist_items por task_id, ya convertidas al formato del frontend. */
+    private function groupChecklistItemsByTask(array $rows): array
+    {
+        $grouped = [];
+        foreach ($rows as $row) {
+            $grouped[(int) $row['task_id']][] = ChecklistItem::fromRow($row)->toArray();
+        }
+        return $grouped;
     }
 
     /** Crea una tarea nueva en la columna "Idea" (backlog), al final de esa columna. */
@@ -95,8 +116,8 @@ final class TaskService
         $this->tasks->delete($taskId);
     }
 
-    /** Busca la tarea y comprueba, a través de su tablero, que pertenece a ese usuario. */
-    private function findOwned(int $taskId, int $userId): array
+    /** Busca la tarea y comprueba, a través de su tablero, que pertenece a ese usuario. Público: lo reutiliza ChecklistService. */
+    public function findOwned(int $taskId, int $userId): array
     {
         $row = $this->tasks->find($taskId);
 
